@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}New Purchase - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('transactions.list_transactions') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Transactions
+    </a>
+    <h1>New Purchase</h1>
+    <p class="page-subtitle">Record stock received from supplier</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" action="{{ url_for('transactions.new_purchase') }}" id="purchaseForm">
+    <div class="form-section">
+      <h3>Supplier Information</h3>
+      
+      <div class="form-group">
+        <label for="supplier_name">Supplier Name <span class="required">*</span></label>
+        <input type="text" id="supplier_name" name="supplier_name" required placeholder="Enter supplier name">
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <h3>Products Received</h3>
+      
+      <div class="product-search-container">
+        <label for="product_search">Search Products</label>
+        <input type="text" id="product_search" placeholder="Search by name, SKU, or ISBN..." autocomplete="off">
+        <div id="search_results" class="search-results"></div>
+      </div>
+      
+      <table class="items-table" id="items_table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Current Stock</th>
+            <th>Unit Cost</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="items_body">
+          <tr class="empty-row" id="empty_row">
+            <td colspan="6" class="text-center">
+              <p>No products added. Search and add products above.</p>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row grand-total">
+            <td colspan="4" class="text-right"><strong>Total Cost:</strong></td>
+            <td id="grand_total"><strong>₱0.00</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    <div class="form-section">
+      <h3>Notes (Optional)</h3>
+      
+      <div class="form-group">
+        <textarea id="notes" name="notes" rows="2" placeholder="Invoice number, delivery notes, etc..."></textarea>
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{{ url_for('transactions.list_transactions') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
+        Record Purchase
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const searchInput = document.getElementById('product_search');
+  const searchResults = document.getElementById('search_results');
+  const itemsBody = document.getElementById('items_body');
+  const emptyRow = document.getElementById('empty_row');
+  const grandTotalEl = document.getElementById('grand_total');
+  const submitBtn = document.getElementById('submit_btn');
+  
+  let items = [];
+  let searchTimeout;
+  
+  // Search products
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+      searchResults.innerHTML = '';
+      searchResults.classList.remove('active');
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      fetch(`/products/api/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(products => {
+          if (products.length === 0) {
+            searchResults.innerHTML = '<div class="no-results">No products found</div>';
+          } else {
+            searchResults.innerHTML = products.map(p => `
+              <div class="search-result-item" data-product='${JSON.stringify(p)}'>
+                <span class="product-name">${p.name}</span>
+                <span class="product-info">${p.sku} | ${p.category} | Current Stock: ${p.quantity}</span>
+              </div>
+            `).join('');
+          }
+          searchResults.classList.add('active');
+        });
+    }, 300);
+  });
+  
+  // Add product from search results
+  searchResults.addEventListener('click', function(e) {
+    const item = e.target.closest('.search-result-item');
+    if (!item) return;
+    
+    const product = JSON.parse(item.dataset.product);
+    
+    // Check if already added
+    if (items.find(i => i.id === product.id)) {
+      alert('Product already added to the purchase.');
+      return;
+    }
+    
+    // Add to items
+    items.push({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      currentStock: product.quantity,
+      unitCost: 0,
+      quantity: 1
+    });
+    
+    updateTable();
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('active');
+  });
+  
+  // Hide search results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      searchResults.classList.remove('active');
+    }
+  });
+  
+  function updateTable() {
+    if (items.length === 0) {
+      emptyRow.style.display = '';
+      submitBtn.disabled = true;
+    } else {
+      emptyRow.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+    
+    // Remove old rows (except empty row)
+    const rows = itemsBody.querySelectorAll('tr:not(#empty_row)');
+    rows.forEach(row => row.remove());
+    
+    // Add new rows
+    items.forEach((item, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>
+          <input type="hidden" name="product_id[]" value="${item.id}">
+          <strong>${item.name}</strong>
+          <br><small>${item.sku}</small>
+        </td>
+        <td>${item.currentStock}</td>
+        <td>
+          <div class="input-with-prefix small">
+            <span class="input-prefix">₱</span>
+            <input type="number" name="unit_cost[]" value="${item.unitCost}" min="0" step="0.01"
+                   class="unit-cost-input" data-index="${index}" placeholder="0.00">
+          </div>
+        </td>
+        <td>
+          <input type="number" name="quantity[]" value="${item.quantity}" min="1"
+                 class="quantity-input" data-index="${index}">
+        </td>
+        <td class="item-subtotal">₱${(item.unitCost * item.quantity).toFixed(2)}</td>
+        <td>
+          <button type="button" class="btn-icon remove-item" data-index="${index}" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </td>
+      `;
+      itemsBody.appendChild(row);
+    });
+    
+    // Add event listeners
+    itemsBody.querySelectorAll('.quantity-input').forEach(input => {
+      input.addEventListener('change', function() {
+        const index = parseInt(this.dataset.index);
+        items[index].quantity = parseInt(this.value) || 1;
+        updateTable();
+      });
+    });
+    
+    itemsBody.querySelectorAll('.unit-cost-input').forEach(input => {
+      input.addEventListener('change', function() {
+        const index = parseInt(this.dataset.index);
+        items[index].unitCost = parseFloat(this.value) || 0;
+        updateTable();
+      });
+    });
+    
+    itemsBody.querySelectorAll('.remove-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.dataset.index);
+        items.splice(index, 1);
+        updateTable();
+      });
+    });
+    
+    updateTotals();
+  }
+  
+  function updateTotals() {
+    const total = items.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0);
+    grandTotalEl.innerHTML = `<strong>₱${total.toFixed(2)}</strong>`;
+  }
+</script>
+{% endblock %}

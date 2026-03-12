@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Audit Log</h1>
+    <p class="page-subtitle">Complete system activity history</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-card">
+  <form method="GET" action="{{ url_for('reports.audit_log') }}" class="filters-form">
+    <div class="filter-group">
+      <label for="action">Action</label>
+      <select id="action" name="action">
+        <option value="">All Actions</option>
+        {% for act in actions %}
+        <option value="{{ act }}" {% if current_action == act %}selected{% endif %}>{{ act.title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="table">Table</label>
+      <select id="table" name="table">
+        <option value="">All Tables</option>
+        {% for tbl in tables %}
+        <option value="{{ tbl }}" {% if current_table == tbl %}selected{% endif %}>{{ tbl.title() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="date_from">From Date</label>
+      <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label for="date_to">To Date</label>
+      <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-secondary">Filter</button>
+      <a href="{{ url_for('reports.audit_log') }}" class="btn btn-outline">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Audit Log Table -->
+<div class="table-card">
+  {% if logs.items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>User</th>
+        <th>Action</th>
+        <th>Table</th>
+        <th>Record ID</th>
+        <th>IP Address</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs.items %}
+      <tr>
+        <td>{{ log.created_at.strftime('%b %d, %Y %H:%M:%S') }}</td>
+        <td>
+          {% if log.user %}
+          {{ log.user.username }}
+          {% else %}
+          System
+          {% endif %}
+        </td>
+        <td>
+          <span class="badge badge-{{ 'success' if log.action == 'create' else 'warning' if log.action == 'update' else 'danger' if log.action == 'delete' else 'info' }}">
+            {{ log.action.title() }}
+          </span>
+        </td>
+        <td>{{ log.table_name.title() }}</td>
+        <td>{{ log.record_id or '-' }}</td>
+        <td>{{ log.ip_address or '-' }}</td>
+        <td>
+          {% if log.old_values or log.new_values %}
+          <button type="button" class="btn btn-sm btn-outline" 
+                  onclick="showDetails('{{ log.old_values | e }}', '{{ log.new_values | e }}')">
+            View Details
+          </button>
+          {% else %}
+          -
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  {% if logs.pages > 1 %}
+  <div class="pagination">
+    {% if logs.has_prev %}
+    <a href="{{ url_for('reports.audit_log', page=logs.prev_num, action=current_action, table=current_table, date_from=date_from, date_to=date_to) }}" class="page-link">&laquo; Previous</a>
+    {% endif %}
+    
+    <span class="page-info">Page {{ logs.page }} of {{ logs.pages }}</span>
+    
+    {% if logs.has_next %}
+    <a href="{{ url_for('reports.audit_log', page=logs.next_num, action=current_action, table=current_table, date_from=date_from, date_to=date_to) }}" class="page-link">Next &raquo;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  {% else %}
+  <div class="empty-state">
+    <p>No audit logs found for the selected filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Change Details</h3>
+      <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <h4>Old Values</h4>
+        <pre id="oldValues"></pre>
+      </div>
+      <div class="detail-section">
+        <h4>New Values</h4>
+        <pre id="newValues"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showDetails(oldVals, newVals) {
+  try {
+    document.getElementById('oldValues').textContent = oldVals ? JSON.stringify(JSON.parse(oldVals), null, 2) : 'N/A';
+  } catch {
+    document.getElementById('oldValues').textContent = oldVals || 'N/A';
+  }
+  try {
+    document.getElementById('newValues').textContent = newVals ? JSON.stringify(JSON.parse(newVals), null, 2) : 'N/A';
+  } catch {
+    document.getElementById('newValues').textContent = newVals || 'N/A';
+  }
+  document.getElementById('detailsModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('detailsModal').style.display = 'none';
+}
+
+document.getElementById('detailsModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}

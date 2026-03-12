@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Transactions</h1>
+    <p class="page-subtitle">Sales and purchase records</p>
+  </div>
+  <div class="page-header-right">
+    <a href="{{ url_for('transactions.new_sale') }}" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      New Sale
+    </a>
+    <a href="{{ url_for('transactions.new_purchase') }}" class="btn btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="1" y="3" width="15" height="13"></rect>
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+      </svg>
+      New Purchase
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-card">
+  <form method="GET" action="{{ url_for('transactions.list_transactions') }}" class="filters-form">
+    <div class="filter-group">
+      <label for="search">Search</label>
+      <input type="text" id="search" name="search" value="{{ search }}" placeholder="Reference, customer, supplier...">
+    </div>
+    <div class="filter-group">
+      <label for="type">Type</label>
+      <select id="type" name="type">
+        <option value="">All Types</option>
+        <option value="sale" {% if transaction_type == 'sale' %}selected{% endif %}>Sales</option>
+        <option value="purchase" {% if transaction_type == 'purchase' %}selected{% endif %}>Purchases</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="date_from">From Date</label>
+      <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label for="date_to">To Date</label>
+      <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-secondary">Filter</button>
+      <a href="{{ url_for('transactions.list_transactions') }}" class="btn btn-outline">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Transactions Table -->
+<div class="table-card">
+  {% if transactions.items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Type</th>
+        <th>Customer/Supplier</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>User</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trans in transactions.items %}
+      <tr>
+        <td class="reference-cell">
+          <a href="{{ url_for('transactions.view_transaction', id=trans.id) }}">{{ trans.reference_number }}</a>
+        </td>
+        <td>
+          <span class="badge badge-{{ 'success' if trans.transaction_type == 'sale' else 'info' }}">
+            {{ trans.transaction_type.title() }}
+          </span>
+        </td>
+        <td>{{ trans.customer_name or trans.supplier_name or '-' }}</td>
+        <td>{{ trans.items.count() }} items</td>
+        <td class="amount-cell">₱{{ "{:,.2f}".format(trans.total) }}</td>
+        <td>{{ trans.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td>{{ trans.user.username }}</td>
+        <td class="actions-cell">
+          <a href="{{ url_for('transactions.view_transaction', id=trans.id) }}" class="btn-icon" title="View Details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  {% if transactions.pages > 1 %}
+  <div class="pagination">
+    {% if transactions.has_prev %}
+    <a href="{{ url_for('transactions.list_transactions', page=transactions.prev_num, type=transaction_type, search=search, date_from=date_from, date_to=date_to) }}" class="page-link">&laquo; Previous</a>
+    {% endif %}
+    
+    <span class="page-info">Page {{ transactions.page }} of {{ transactions.pages }}</span>
+    
+    {% if transactions.has_next %}
+    <a href="{{ url_for('transactions.list_transactions', page=transactions.next_num, type=transaction_type, search=search, date_from=date_from, date_to=date_to) }}" class="page-link">Next &raquo;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="12" y1="1" x2="12" y2="23"></line>
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+    </svg>
+    <h3>No transactions found</h3>
+    <p>{% if search or transaction_type or date_from or date_to %}Try adjusting your filters{% else %}Start by creating a sale or purchase{% endif %}</p>
+    <div class="empty-actions">
+      <a href="{{ url_for('transactions.new_sale') }}" class="btn btn-primary">New Sale</a>
+      <a href="{{ url_for('transactions.new_purchase') }}" class="btn btn-secondary">New Purchase</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

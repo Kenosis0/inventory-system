@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}{{ transaction.reference_number }} - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('transactions.list_transactions') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Transactions
+    </a>
+    <h1>{{ transaction.reference_number }}</h1>
+    <span class="badge badge-{{ 'success' if transaction.transaction_type == 'sale' else 'info' }} badge-lg">
+      {{ transaction.transaction_type.title() }}
+    </span>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- Transaction Info -->
+  <div class="detail-card">
+    <div class="card-header">
+      <h3>Transaction Details</h3>
+    </div>
+    <div class="card-body">
+      <div class="detail-row">
+        <span class="detail-label">Reference Number</span>
+        <span class="detail-value">{{ transaction.reference_number }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Type</span>
+        <span class="detail-value">
+          <span class="badge badge-{{ 'success' if transaction.transaction_type == 'sale' else 'info' }}">
+            {{ transaction.transaction_type.title() }}
+          </span>
+        </span>
+      </div>
+      {% if transaction.customer_name %}
+      <div class="detail-row">
+        <span class="detail-label">Customer</span>
+        <span class="detail-value">{{ transaction.customer_name }}</span>
+      </div>
+      {% endif %}
+      {% if transaction.supplier_name %}
+      <div class="detail-row">
+        <span class="detail-label">Supplier</span>
+        <span class="detail-value">{{ transaction.supplier_name }}</span>
+      </div>
+      {% endif %}
+      <div class="detail-row">
+        <span class="detail-label">Processed By</span>
+        <span class="detail-value">{{ transaction.user.username }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date & Time</span>
+        <span class="detail-value">{{ transaction.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
+      </div>
+      {% if transaction.notes %}
+      <div class="detail-row">
+        <span class="detail-label">Notes</span>
+        <span class="detail-value">{{ transaction.notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Amount Summary -->
+  <div class="detail-card">
+    <div class="card-header">
+      <h3>Amount Summary</h3>
+    </div>
+    <div class="card-body">
+      <div class="detail-row">
+        <span class="detail-label">Subtotal</span>
+        <span class="detail-value">₱{{ "{:,.2f}".format(transaction.subtotal) }}</span>
+      </div>
+      {% if transaction.discount > 0 %}
+      <div class="detail-row">
+        <span class="detail-label">Discount</span>
+        <span class="detail-value text-success">-₱{{ "{:,.2f}".format(transaction.discount) }}</span>
+      </div>
+      {% endif %}
+      {% if transaction.tax > 0 %}
+      <div class="detail-row">
+        <span class="detail-label">Tax</span>
+        <span class="detail-value">₱{{ "{:,.2f}".format(transaction.tax) }}</span>
+      </div>
+      {% endif %}
+      <hr>
+      <div class="detail-row total-row">
+        <span class="detail-label"><strong>Total</strong></span>
+        <span class="detail-value"><strong>₱{{ "{:,.2f}".format(transaction.total) }}</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Items Table -->
+<div class="table-card">
+  <div class="card-header">
+    <h3>Items ({{ items|length }})</h3>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>SKU</th>
+        <th>Unit Price</th>
+        <th>Quantity</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <a href="{{ url_for('products.view_product', id=item.product.id) }}">{{ item.product.name }}</a>
+        </td>
+        <td>{{ item.product.sku }}</td>
+        <td>₱{{ "{:,.2f}".format(item.unit_price) }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>₱{{ "{:,.2f}".format(item.total_price) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

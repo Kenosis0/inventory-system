@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit User' if user else 'Add User' }} - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('users.list_users') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Users
+    </a>
+    <h1>{{ 'Edit User' if user else 'Add New User' }}</h1>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" action="{{ url_for('users.edit_user', id=user.id) if user else url_for('users.add_user') }}">
+    <div class="form-section">
+      <h3>Account Information</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="username">Username <span class="required">*</span></label>
+          <input type="text" id="username" name="username" required minlength="3"
+                 value="{{ user.username if user else '' }}"
+                 placeholder="Enter username">
+          <small>Minimum 3 characters</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input type="email" id="email" name="email" required
+                 value="{{ user.email if user else '' }}"
+                 placeholder="Enter email address">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="role">Role <span class="required">*</span></label>
+        <select id="role" name="role" required>
+          {% for role in roles %}
+          <option value="{{ role }}" {% if user and user.role == role %}selected{% endif %}>
+            {{ role.title() }}
+            {% if role == 'admin' %}- Full access to all features{% endif %}
+            {% if role == 'staff' %}- Can manage products and transactions{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      
+      {% if user %}
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="is_active" {% if user.is_active %}checked{% endif %}>
+          <span>Account is active</span>
+        </label>
+        <small>Inactive users cannot log in</small>
+      </div>
+      {% endif %}
+    </div>
+    
+    <div class="form-section">
+      <h3>{{ 'Change Password' if user else 'Password' }}</h3>
+      {% if user %}
+      <p class="section-note">Leave blank to keep the current password.</p>
+      {% endif %}
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="{{ 'new_password' if user else 'password' }}">
+            {{ 'New Password' if user else 'Password' }}
+            {% if not user %}<span class="required">*</span>{% endif %}
+          </label>
+          <input type="password" id="{{ 'new_password' if user else 'password' }}" 
+                 name="{{ 'new_password' if user else 'password' }}"
+                 {% if not user %}required{% endif %} minlength="6"
+                 placeholder="Enter password">
+          <small>Minimum 6 characters</small>
+        </div>
+        
+        {% if not user %}
+        <div class="form-group">
+          <label for="confirm_password">Confirm Password <span class="required">*</span></label>
+          <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                 placeholder="Confirm password">
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{{ url_for('users.list_users') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        {{ 'Update User' if user else 'Create User' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

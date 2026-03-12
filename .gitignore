@@ -1,7 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
-instance/
 *.sqlite
 .env
 .vscode/
+PERSONAL-PROJECT-REPORT/
+instance/*
+!instance/inventory.db

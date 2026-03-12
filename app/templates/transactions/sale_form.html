@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}New Sale - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('transactions.list_transactions') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Transactions
+    </a>
+    <h1>New Sale</h1>
+    <p class="page-subtitle">Record a new sales transaction</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" action="{{ url_for('transactions.new_sale') }}" id="saleForm">
+    <div class="form-section">
+      <h3>Customer Information (Optional)</h3>
+      
+      <div class="form-group">
+        <label for="customer_name">Customer Name</label>
+        <input type="text" id="customer_name" name="customer_name" placeholder="Enter customer name (optional)">
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <h3>Products</h3>
+      
+      <div class="product-search-container">
+        <label for="product_search">Search Products</label>
+        <input type="text" id="product_search" placeholder="Search by name, SKU, or ISBN..." autocomplete="off">
+        <div id="search_results" class="search-results"></div>
+      </div>
+      
+      <table class="items-table" id="items_table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Available</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="items_body">
+          <tr class="empty-row" id="empty_row">
+            <td colspan="6" class="text-center">
+              <p>No products added. Search and add products above.</p>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td colspan="4" class="text-right"><strong>Subtotal:</strong></td>
+            <td id="subtotal">₱0.00</td>
+            <td></td>
+          </tr>
+          <tr class="totals-row">
+            <td colspan="4" class="text-right">
+              <strong>Discount:</strong>
+            </td>
+            <td>
+              <div class="input-with-prefix small">
+                <span class="input-prefix">₱</span>
+                <input type="number" id="discount" name="discount" value="0" min="0" step="0.01">
+              </div>
+            </td>
+            <td></td>
+          </tr>
+          <tr class="totals-row grand-total">
+            <td colspan="4" class="text-right"><strong>Total:</strong></td>
+            <td id="grand_total"><strong>₱0.00</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    <div class="form-section">
+      <h3>Notes (Optional)</h3>
+      
+      <div class="form-group">
+        <textarea id="notes" name="notes" rows="2" placeholder="Additional notes for this transaction..."></textarea>
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{{ url_for('transactions.list_transactions') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary" id="submit_btn" disabled>
+        Complete Sale
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const searchInput = document.getElementById('product_search');
+  const searchResults = document.getElementById('search_results');
+  const itemsBody = document.getElementById('items_body');
+  const emptyRow = document.getElementById('empty_row');
+  const subtotalEl = document.getElementById('subtotal');
+  const grandTotalEl = document.getElementById('grand_total');
+  const discountInput = document.getElementById('discount');
+  const submitBtn = document.getElementById('submit_btn');
+  
+  let items = [];
+  let searchTimeout;
+  
+  // Search products
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 2) {
+      searchResults.innerHTML = '';
+      searchResults.classList.remove('active');
+      return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+      fetch(`/products/api/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(products => {
+          if (products.length === 0) {
+            searchResults.innerHTML = '<div class="no-results">No products found</div>';
+          } else {
+            searchResults.innerHTML = products.map(p => `
+              <div class="search-result-item" data-product='${JSON.stringify(p)}'>
+                <span class="product-name">${p.name}</span>
+                <span class="product-info">${p.sku} | ${p.category} | Stock: ${p.quantity}</span>
+                <span class="product-price">₱${p.price.toFixed(2)}</span>
+              </div>
+            `).join('');
+          }
+          searchResults.classList.add('active');
+        });
+    }, 300);
+  });
+  
+  // Add product from search results
+  searchResults.addEventListener('click', function(e) {
+    const item = e.target.closest('.search-result-item');
+    if (!item) return;
+    
+    const product = JSON.parse(item.dataset.product);
+    
+    // Check if already added
+    if (items.find(i => i.id === product.id)) {
+      alert('Product already added to the sale.');
+      return;
+    }
+    
+    // Check stock
+    if (product.quantity <= 0) {
+      alert('This product is out of stock.');
+      return;
+    }
+    
+    // Add to items
+    items.push({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: product.price,
+      available: product.quantity,
+      quantity: 1
+    });
+    
+    updateTable();
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+    searchResults.classList.remove('active');
+  });
+  
+  // Hide search results when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      searchResults.classList.remove('active');
+    }
+  });
+  
+  // Update discount
+  discountInput.addEventListener('input', updateTotals);
+  
+  function updateTable() {
+    if (items.length === 0) {
+      emptyRow.style.display = '';
+      submitBtn.disabled = true;
+    } else {
+      emptyRow.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+    
+    // Remove old rows (except empty row)
+    const rows = itemsBody.querySelectorAll('tr:not(#empty_row)');
+    rows.forEach(row => row.remove());
+    
+    // Add new rows
+    items.forEach((item, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>
+          <input type="hidden" name="product_id[]" value="${item.id}">
+          <strong>${item.name}</strong>
+          <br><small>${item.sku}</small>
+        </td>
+        <td>${item.available}</td>
+        <td>₱${item.price.toFixed(2)}</td>
+        <td>
+          <input type="number" name="quantity[]" value="${item.quantity}" min="1" max="${item.available}" 
+                 class="quantity-input" data-index="${index}">
+        </td>
+        <td class="item-subtotal">₱${(item.price * item.quantity).toFixed(2)}</td>
+        <td>
+          <button type="button" class="btn-icon remove-item" data-index="${index}" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </td>
+      `;
+      itemsBody.appendChild(row);
+    });
+    
+    // Add event listeners
+    itemsBody.querySelectorAll('.quantity-input').forEach(input => {
+      input.addEventListener('change', function() {
+        const index = parseInt(this.dataset.index);
+        const newQty = parseInt(this.value) || 1;
+        items[index].quantity = Math.min(newQty, items[index].available);
+        this.value = items[index].quantity;
+        updateTable();
+      });
+    });
+    
+    itemsBody.querySelectorAll('.remove-item').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.dataset.index);
+        items.splice(index, 1);
+        updateTable();
+      });
+    });
+    
+    updateTotals();
+  }
+  
+  function updateTotals() {
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const discount = parseFloat(discountInput.value) || 0;
+    const total = Math.max(0, subtotal - discount);
+    
+    subtotalEl.textContent = `₱${subtotal.toFixed(2)}`;
+    grandTotalEl.innerHTML = `<strong>₱${total.toFixed(2)}</strong>`;
+  }
+</script>
+{% endblock %}

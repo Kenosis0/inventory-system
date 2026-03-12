@@ -1,116 +1,73 @@
-# **Inventory System - Team Setup Guide**
-(Python + Flask + HTML/CSS + SQLite)
-This is a student-built web-based inventory system. This README is written for first-time setup only, so follow it exactly to avoid breaking the setup.
+# Inventory System (School Bookstore)
 
-### **NOTE:**
-If you have not installed the required tools yet, do that before cloning the project. This guide assumes you can open a terminal and run basic commands.
-> ### Required tools:
-> - Python 3.x (check by running: python --version)
-> - VS Code (code editor)
-> - Git (version control; check by running: git --version)
+## Educational Disclaimer
+This project is an **educational/student project** for learning Human-Computer Interaction and software development practices.
+It is not designed for production or commercial deployment.
 
-> ### Optional tool supports for view and testing (recommended):
-> - DB Browser for SQLite (to view tables/records later)
-> - Postman or Insomnia (to test endpoints later)
-> - GitHub Desktop (optional if you struggle with terminal Git)
+## Quick Project Overview
+This system helps a school bookstore manage:
+- products (books, supplies, uniforms, exclusive materials)
+- stock adjustments and low-stock checks
+- sales and purchase transactions
+- user roles (admin/staff)
+- reports (sales, inventory, stock movements, audit)
 
+## What You Need
+- Python 3.10+ installed
+- Git installed
 
-### Clone the repository for the first time
-> Where to type commands: Use the VS Code terminal (Terminal -> New Terminal) or your system terminal. Make sure you are in the folder where you want the project to live (example: Desktop).
-1) Clone and enter the project folder:
-``git clone <REPO_URL> cd inventory-system``
-2) Confirm you are in the correct 
-```
-# macOS/Linux/PowerShell
-pwd
-ls
-# Windows CMD
-cd
-dir
-```
-You should see files like app/, run.py, requirements.txt, and .gitignore in the project root.
+That is all.
 
-> ### Create your .gitignore correctly (avoid .gitignore.txt)
->***Important: the file must be named exactly ".gitignore" (no .txt). Some Windows setups hide file extensions, which can accidentally create ".gitignore.txt".***
+## Super Easy Run (for everyone)
+1. Download or clone this project.
+2. Open a terminal inside the project folder.
+3. Run:
+   ```bash
+   python start.py
+   ```
+4. Wait until you see the server start message.
+5. Open your browser to:
+   ```
+   http://127.0.0.1:5000
+   ```
 
-> How to create it safely:
-- the file in the project root (same level as app/ and run.py).
-- Name it exactly: .gitignore
-- If you already have .gitignore.txt, rename it to .gitignore.
+That command automatically:
+- creates `.venv` if missing
+- installs requirements
+- prepares `instance/`
+- starts the Flask app
 
- __Recommended .gitignore contents:__
-```.venv/
-__pycache__/
-*.pyc
-instance/
-*.sqlite
-.env
-.vscode/
-```
+## Shared Database (1:1 Team Setup)
+This repository tracks `instance/inventory.db` so teammates can clone the **same current database state**.
 
-### Set up local-only files/folders (these will NOT appear after pulling)
-When you pull/clone the repo, you only receive the shared code. Each member must create local-only items on their own machine.
+Meaning:
+- if you commit database updates, teammates can pull and get the same data
+- if they add data, they can commit/push that updated database for others
+- everyone can stay in sync at a 1:1 state using normal Git pull/push workflow
 
-#### A. Create a virtual environment (local Python setup)
-Run these commands in the project root (inventory-system/):
-```
-python -m venv .venv
-```
+### Important Team Note
+Because the database is a single file, avoid editing it at the same time in different branches to reduce merge conflicts.
 
-#### Activate the virtual environment:
-```
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
+## Daily Use
+- Start app anytime:
+  ```bash
+  python start.py
+  ```
+- Stop app:
+  - press `CTRL + C` in the terminal
 
-# Windows CMD
-.venv\Scripts\activate
+## First-Run Fallback
+If `instance/inventory.db` is missing, the app creates tables and seeds default starter records automatically.
 
-# macOS/Linux
-source .venv/bin/activate
-```
-If PowerShell blocks activation, close the terminal, open a NEW PowerShell terminal, then run:
-```
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
+## Project Structure (quick map)
+- `app/routes/` - route handlers
+- `app/templates/` - HTML templates
+- `app/static/` - CSS, JS, images
+- `app/models.py` - database models
+- `run.py` - Flask entry point
+- `start.py` - one-command setup + run
 
-#### B. Install Python packages (dependencies)
-With the venv activated, run:
-```
-pip install -r requirements.txt
-```
-
-#### C. Instance folder and SQLite database
-> The instance/ folder is where the local SQLite database will be created later. It can be empty at the start.
-- If instance/ does not exist locally, create it in the project root.
-- The database file (example: inventory.sqlite) will appear only after the database setup code runs.
-
-#### D. Environment file (.env) when the team adds configuration
-Later, the project may include a .env.example file. Each member will create their own .env locally by copying it.
-```
-# Windows
-copy .env.example .env
-
-# macOS/Linux
-cp .env.example .env
-```
-Never rename .env to .env.txt. It must be exactly .env.
-
-### Run the project (local)
-In the project root, with __venv activated__:
-```
-python run.py
-```
-Open your browser at: ``http://127.0.0.1:5000/``
-_Stop the server by pressing CTRL + C in the terminal._
-
-### Quick reference: where to put your work files
->- HTML pages: app/templates/
->- CSS files: app/static/css/
->- JavaScript files: app/static/js/
->- Python routes (page links): app/routes/
->- Do not place new code files directly in the project root unless instructed by the team lead.
-
-### Troubleshooting basics
->- If a command fails, confirm you are in the project root (inventory-system/) and your venv is activated.
->- If you see “Template not found”, confirm the folder is named app/templates (plural).
->- If pip installs fail, upgrade pip: python -m pip install --upgrade pip, then retry.
+## Troubleshooting
+- **python not found**: reinstall Python and check "Add Python to PATH"
+- **pip install fails**: run `python -m pip install --upgrade pip` then `python start.py`
+- **port already in use**: close other app using port 5000, then run `python start.py` again

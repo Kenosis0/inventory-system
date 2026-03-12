@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Low Stock Items - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Low Stock Alerts</h1>
+    <p class="page-subtitle">Products at or below their reorder level</p>
+  </div>
+</div>
+
+<div class="table-card">
+  {% if products %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>SKU</th>
+        <th>Product Name</th>
+        <th>Category</th>
+        <th>Current Stock</th>
+        <th>Reorder Level</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for product in products %}
+      <tr class="{% if product.quantity == 0 %}row-danger{% else %}row-warning{% endif %}">
+        <td class="sku-cell">{{ product.sku }}</td>
+        <td>
+          <a href="{{ url_for('products.view_product', id=product.id) }}" class="product-name">
+            {{ product.name }}
+          </a>
+        </td>
+        <td>
+          <span class="badge badge-category">{{ product.category.name }}</span>
+        </td>
+        <td class="stock-cell {% if product.quantity == 0 %}text-danger{% else %}text-warning{% endif %}">
+          <strong>{{ product.quantity }}</strong>
+        </td>
+        <td>{{ product.reorder_level }}</td>
+        <td>
+          {% if product.quantity == 0 %}
+          <span class="badge badge-danger">Out of Stock</span>
+          {% else %}
+          <span class="badge badge-warning">Low Stock</span>
+          {% endif %}
+        </td>
+        <td class="actions-cell">
+          <a href="{{ url_for('transactions.new_purchase') }}" class="btn btn-sm btn-primary">Restock</a>
+          <a href="{{ url_for('products.adjust_stock', id=product.id) }}" class="btn btn-sm btn-outline">Adjust</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state success">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <h3>All stocked up!</h3>
+    <p>No products are currently below their reorder level.</p>
+    <a href="{{ url_for('products.list_products') }}" class="btn btn-primary">View All Products</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if product else 'Add' }} Product - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('products.list_products') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Products
+    </a>
+    <h1>{{ 'Edit Product' if product else 'Add New Product' }}</h1>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" action="{{ url_for('products.edit_product', id=product.id) if product else url_for('products.add_product') }}">
+    <div class="form-section">
+      <h3>Basic Information</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sku">SKU <span class="required">*</span></label>
+          <input type="text" id="sku" name="sku" required
+                 value="{{ form_data.get('sku', product.sku if product else '') }}"
+                 placeholder="e.g., BK-001">
+          <small>Stock Keeping Unit - unique identifier</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="category_id">Category <span class="required">*</span></label>
+          <select id="category_id" name="category_id" required>
+            <option value="">Select Category</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" 
+                    {% if form_data.get('category_id')|int == cat.id or (product and product.category_id == cat.id) %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="name">Product Name <span class="required">*</span></label>
+        <input type="text" id="name" name="name" required
+               value="{{ form_data.get('name', product.name if product else '') }}"
+               placeholder="Enter product name">
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3" 
+                  placeholder="Product description (optional)">{{ form_data.get('description', product.description if product else '') }}</textarea>
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <h3>Pricing & Stock</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="cost_price">Cost Price <span class="required">*</span></label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">₱</span>
+            <input type="number" id="cost_price" name="cost_price" required step="0.01" min="0"
+                   value="{{ form_data.get('cost_price', product.cost_price if product else '0') }}"
+                   placeholder="0.00">
+          </div>
+          <small>Your purchase cost</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="selling_price">Selling Price <span class="required">*</span></label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">₱</span>
+            <input type="number" id="selling_price" name="selling_price" required step="0.01" min="0"
+                   value="{{ form_data.get('selling_price', product.selling_price if product else '0') }}"
+                   placeholder="0.00">
+          </div>
+          <small>Price for customers</small>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        {% if not product %}
+        <div class="form-group">
+          <label for="quantity">Initial Quantity</label>
+          <input type="number" id="quantity" name="quantity" min="0"
+                 value="{{ form_data.get('quantity', '0') }}"
+                 placeholder="0">
+          <small>Starting stock quantity</small>
+        </div>
+        {% endif %}
+        
+        <div class="form-group">
+          <label for="reorder_level">Reorder Level</label>
+          <input type="number" id="reorder_level" name="reorder_level" min="0"
+                 value="{{ form_data.get('reorder_level', product.reorder_level if product else '10') }}"
+                 placeholder="10">
+          <small>Alert when stock falls to this level</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <h3>Book Details (Optional)</h3>
+      <p class="section-note">Fill these fields only if the product is a book.</p>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="isbn">ISBN</label>
+          <input type="text" id="isbn" name="isbn"
+                 value="{{ form_data.get('isbn', product.isbn if product else '') }}"
+                 placeholder="e.g., 978-3-16-148410-0">
+        </div>
+        
+        <div class="form-group">
+          <label for="author">Author</label>
+          <input type="text" id="author" name="author"
+                 value="{{ form_data.get('author', product.author if product else '') }}"
+                 placeholder="Author name">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="publisher">Publisher</label>
+        <input type="text" id="publisher" name="publisher"
+               value="{{ form_data.get('publisher', product.publisher if product else '') }}"
+               placeholder="Publisher name">
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{{ url_for('products.list_products') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        {{ 'Update Product' if product else 'Add Product' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

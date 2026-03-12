@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p class="page-subtitle">Welcome back, {{ current_user.username }}!</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">{{ total_products }}</span>
+      <span class="stat-label">Total Products</span>
+    </div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(today_sales_total) }}</span>
+      <span class="stat-label">Today's Sales ({{ today_sales_count }} orders)</span>
+    </div>
+  </div>
+  
+  <div class="stat-card {% if low_stock_count > 0 %}warning{% endif %}">
+    <div class="stat-icon {% if low_stock_count > 0 %}orange{% else %}gray{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">{{ low_stock_count }}</span>
+      <span class="stat-label">Low Stock Items</span>
+    </div>
+  </div>
+  
+  <div class="stat-card">
+    <div class="stat-icon purple">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(inventory_value) }}</span>
+      <span class="stat-label">Inventory Value</span>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <h3>Quick Actions</h3>
+  <div class="action-buttons">
+    <a href="{{ url_for('transactions.new_sale') }}" class="action-button primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      New Sale
+    </a>
+    <a href="{{ url_for('transactions.new_purchase') }}" class="action-button secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="1" y="3" width="15" height="13"></rect>
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+      </svg>
+      New Purchase
+    </a>
+    <a href="{{ url_for('products.add_product') }}" class="action-button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add Product
+    </a>
+    <a href="{{ url_for('products.low_stock') }}" class="action-button {% if low_stock_count > 0 %}warning{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      View Low Stock
+    </a>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <!-- Low Stock Alerts -->
+  {% if low_stock_products %}
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        Low Stock Alerts
+      </h3>
+      <a href="{{ url_for('products.low_stock') }}" class="view-all">View All</a>
+    </div>
+    <div class="card-body">
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Stock</th>
+            <th>Reorder Level</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in low_stock_products %}
+          <tr>
+            <td>
+              <a href="{{ url_for('products.view_product', id=product.id) }}">{{ product.name }}</a>
+            </td>
+            <td class="{% if product.quantity == 0 %}text-danger{% else %}text-warning{% endif %}">
+              {{ product.quantity }}
+            </td>
+            <td>{{ product.reorder_level }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Recent Transactions -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        Recent Transactions
+      </h3>
+      <a href="{{ url_for('transactions.list_transactions') }}" class="view-all">View All</a>
+    </div>
+    <div class="card-body">
+      {% if recent_transactions %}
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Type</th>
+            <th>Total</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trans in recent_transactions %}
+          <tr>
+            <td>
+              <a href="{{ url_for('transactions.view_transaction', id=trans.id) }}">{{ trans.reference_number }}</a>
+            </td>
+            <td>
+              <span class="badge badge-{{ 'success' if trans.transaction_type == 'sale' else 'info' }}">
+                {{ trans.transaction_type.title() }}
+              </span>
+            </td>
+            <td>₱{{ "{:,.2f}".format(trans.total) }}</td>
+            <td>{{ trans.created_at.strftime('%b %d, %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty-message">No transactions yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  
+  <!-- Categories Overview -->
+  <div class="dashboard-card">
+    <div class="card-header">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Products by Category
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="category-list">
+        {% for name, count in category_stats %}
+        <div class="category-item">
+          <span class="category-name">{{ name }}</span>
+          <span class="category-count">{{ count or 0 }} products</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

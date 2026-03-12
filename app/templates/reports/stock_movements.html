@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Movements - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Stock Movements</h1>
+    <p class="page-subtitle">Track all inventory changes</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters-card">
+  <form method="GET" action="{{ url_for('reports.stock_movements') }}" class="filters-form">
+    <div class="filter-group">
+      <label for="product_id">Product</label>
+      <select id="product_id" name="product_id">
+        <option value="">All Products</option>
+        {% for product in products %}
+        <option value="{{ product.id }}" {% if current_product == product.id %}selected{% endif %}>
+          {{ product.name }} ({{ product.sku }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="type">Movement Type</label>
+      <select id="type" name="type">
+        <option value="">All Types</option>
+        <option value="sale" {% if current_type == 'sale' %}selected{% endif %}>Sale</option>
+        <option value="purchase" {% if current_type == 'purchase' %}selected{% endif %}>Purchase</option>
+        <option value="adjustment" {% if current_type == 'adjustment' %}selected{% endif %}>Adjustment</option>
+        <option value="return" {% if current_type == 'return' %}selected{% endif %}>Return</option>
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-secondary">Filter</button>
+      <a href="{{ url_for('reports.stock_movements') }}" class="btn btn-outline">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Movements Table -->
+<div class="table-card">
+  {% if movements.items %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date & Time</th>
+        <th>Product</th>
+        <th>Type</th>
+        <th>Change</th>
+        <th>Before</th>
+        <th>After</th>
+        <th>Reference</th>
+        <th>User</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in movements.items %}
+      <tr>
+        <td>{{ m.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('products.view_product', id=m.product.id) }}">{{ m.product.name }}</a>
+          <br><small>{{ m.product.sku }}</small>
+        </td>
+        <td>
+          <span class="badge badge-{{ 'success' if m.movement_type == 'purchase' else 'info' if m.movement_type == 'adjustment' else 'warning' }}">
+            {{ m.movement_type.title() }}
+          </span>
+        </td>
+        <td class="{% if m.quantity_change > 0 %}text-success{% else %}text-danger{% endif %}">
+          <strong>{{ '+' if m.quantity_change > 0 else '' }}{{ m.quantity_change }}</strong>
+        </td>
+        <td>{{ m.quantity_before }}</td>
+        <td>{{ m.quantity_after }}</td>
+        <td>{{ m.reference or '-' }}</td>
+        <td>{{ m.user.username }}</td>
+        <td>{{ m.notes or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  
+  <!-- Pagination -->
+  {% if movements.pages > 1 %}
+  <div class="pagination">
+    {% if movements.has_prev %}
+    <a href="{{ url_for('reports.stock_movements', page=movements.prev_num, product_id=current_product, type=current_type) }}" class="page-link">&laquo; Previous</a>
+    {% endif %}
+    
+    <span class="page-info">Page {{ movements.page }} of {{ movements.pages }}</span>
+    
+    {% if movements.has_next %}
+    <a href="{{ url_for('reports.stock_movements', page=movements.next_num, product_id=current_product, type=current_type) }}" class="page-link">Next &raquo;</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  {% else %}
+  <div class="empty-state">
+    <p>No stock movements found.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
