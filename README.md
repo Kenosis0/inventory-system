@@ -71,3 +71,4 @@ If `instance/inventory.db` is missing, the app creates tables and seeds default 
 - **python not found**: reinstall Python and check "Add Python to PATH"
 - **pip install fails**: run `python -m pip install --upgrade pip` then `python start.py`
 - **port already in use**: close other app using port 5000, then run `python start.py` again
+- **ModuleNotFoundError (example: flask_login)**: run `python start.py` again after pulling latest changes; if it still fails, delete `.venv` then run `python start.py` to rebuild dependencies
