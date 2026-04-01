@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from flask import request
 from flask_login import current_user
 import uuid
@@ -10,7 +10,7 @@ def generate_reference_number(prefix='TXN'):
     Format: {PREFIX}-{TIMESTAMP}-{RANDOM_SUFFIX}
     Ensures uniqueness even if transactions occur in the same second.
     """
-    timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    timestamp = datetime.now(UTC).strftime('%Y%m%d%H%M%S')
     random_suffix = uuid.uuid4().hex[:6].upper()
     return f"{prefix}-{timestamp}-{random_suffix}"
 

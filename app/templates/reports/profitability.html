@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Profitability Report - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Profitability Report</h1>
+    <p class="page-subtitle">Revenue vs COGS with historical cost snapshots</p>
+  </div>
+</div>
+
+<div class="filters-card">
+  <form method="GET" action="{{ url_for('reports.profitability_report') }}" class="filters-form">
+    <div class="filter-group">
+      <label for="date_from">From Date</label>
+      <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label for="date_to">To Date</label>
+      <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-secondary">Apply</button>
+      <a href="{{ url_for('reports.profitability_report') }}" class="btn btn-outline">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(total_revenue) }}</span>
+      <span class="stat-label">Total Revenue</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(total_cogs) }}</span>
+      <span class="stat-label">Total COGS</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value {{ 'text-success' if total_gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(total_gross_profit) }}</span>
+      <span class="stat-label">Gross Profit</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">{{ "{:.2f}".format(overall_margin_percent) }}%</span>
+      <span class="stat-label">Gross Margin</span>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-top: 16px;">
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(purchase_total) }}</span>
+      <span class="stat-label">Purchase Spend (Period)</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value {{ 'text-success' if net_cash_movement >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(net_cash_movement) }}</span>
+      <span class="stat-label">Net Cash Movement</span>
+    </div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="card-header">
+    <h3>Sales Profitability Breakdown</h3>
+  </div>
+  {% if rows %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Date</th>
+        <th>Revenue</th>
+        <th>COGS</th>
+        <th>Gross Profit</th>
+        <th>Margin %</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          <a href="{{ url_for('transactions.view_transaction', id=row.transaction.id) }}">{{ row.transaction.reference_number }}</a>
+        </td>
+        <td>{{ row.transaction.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td>₱{{ "{:,.2f}".format(row.revenue) }}</td>
+        <td>₱{{ "{:,.2f}".format(row.cogs) }}</td>
+        <td class="{{ 'text-success' if row.gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(row.gross_profit) }}</td>
+        <td>{{ "{:.2f}".format(row.margin_percent) }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p>No sales found for the selected date range.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

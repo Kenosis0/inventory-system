@@ -1,12 +1,30 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from app.models import db, Transaction, TransactionItem, Product, StockMovement, AuditLog, Supplier
+from app.models import db, Transaction, TransactionItem, Product, StockMovement, AuditLog, Supplier, CashLedger
 from app.utils.decorators import staff_required
 from app.utils.helpers import generate_reference_number, validate_positive_integer
+from sqlalchemy import or_
 import json
 
 transactions_bp = Blueprint('transactions', __name__)
+
+
+def _record_cash_entry(entry_type, amount, notes=None, transaction_id=None):
+    """Create a cash ledger entry with updated running balance."""
+    latest = CashLedger.query.order_by(CashLedger.id.desc()).first()
+    current_balance = latest.running_balance if latest else 0.0
+    new_balance = current_balance + amount
+
+    entry = CashLedger(
+        entry_type=entry_type,
+        amount=amount,
+        running_balance=new_balance,
+        transaction_id=transaction_id,
+        user_id=current_user.id,
+        notes=notes
+    )
+    db.session.add(entry)
 
 @transactions_bp.route('/')
 @login_required
@@ -44,10 +62,11 @@ def list_transactions():
             pass
     
     if search:
-        query = query.filter(
-            db.or_(
+        query = query.outerjoin(Supplier).filter(
+            or_(
                 Transaction.reference_number.ilike(f'%{search}%'),
-                Transaction.customer_name.ilike(f'%{search}%')
+                Transaction.customer_name.ilike(f'%{search}%'),
+                Supplier.name.ilike(f'%{search}%')
             )
         )
     
@@ -148,6 +167,7 @@ def new_sale():
         for item in items:
             product = item['product']
             quantity = item['quantity']
+            unit_cost_at_sale = product.cost_price
             
             # Create transaction item
             trans_item = TransactionItem(
@@ -155,7 +175,8 @@ def new_sale():
                 product_id=product.id,
                 quantity=quantity,
                 unit_price=item['unit_price'],
-                total_price=item['total_price']
+                total_price=item['total_price'],
+                unit_cost_at_sale=unit_cost_at_sale
             )
             db.session.add(trans_item)
             
@@ -174,6 +195,13 @@ def new_sale():
             
             # Update product quantity
             product.quantity -= quantity
+
+        _record_cash_entry(
+            entry_type='sale_inflow',
+            amount=total,
+            notes=f'Sale {transaction.reference_number}',
+            transaction_id=transaction.id
+        )
         
         # Audit log
         audit = AuditLog(
@@ -321,6 +349,13 @@ def new_purchase():
             
             # Optionally update cost price
             product.cost_price = item['unit_price']
+
+        _record_cash_entry(
+            entry_type='purchase_outflow',
+            amount=-subtotal,
+            notes=f'Purchase {transaction.reference_number} from {supplier.name}',
+            transaction_id=transaction.id
+        )
         
         # Audit log
         audit = AuditLog(

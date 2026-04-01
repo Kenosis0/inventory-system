@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Finance Setup - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Finance Setup</h1>
+    <p class="page-subtitle">Configure opening cash balance for ledger tracking</p>
+  </div>
+</div>
+
+<div class="form-card">
+  {% if opening_entry %}
+  <div class="flash-message flash-info" style="margin-bottom: 16px;">
+    <span>Opening balance already configured: <strong>₱{{ "{:,.2f}".format(opening_entry.amount) }}</strong></span>
+  </div>
+  <div class="form-actions">
+    <a href="{{ url_for('reports.cashflow_report') }}" class="btn btn-primary">Go to Cashflow Report</a>
+  </div>
+  {% else %}
+  <form method="POST" action="{{ url_for('reports.finance_setup') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+    <div class="form-section">
+      <h3>Opening Balance</h3>
+      <div class="form-group">
+        <label for="opening_balance">Opening Cash Balance <span class="required">*</span></label>
+        <div class="input-with-prefix">
+          <span class="input-prefix">₱</span>
+          <input type="number" id="opening_balance" name="opening_balance" required min="0" step="0.01" placeholder="0.00">
+        </div>
+        <small>This should match your actual cash on hand at system start.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notes (Optional)</label>
+        <textarea id="notes" name="notes" rows="2" placeholder="e.g., Opening cash for April operations"></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">Save Opening Balance</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

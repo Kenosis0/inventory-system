@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from sqlalchemy import text
 from config import Config
 from .models import db, User, Category, Supplier, Role
 
@@ -44,6 +45,7 @@ def create_app(config_class=Config):
     # Create database tables and seed initial data
     with app.app_context():
         db.create_all()
+        ensure_schema_updates()
         seed_initial_data()
     
     return app
@@ -81,3 +83,17 @@ def seed_initial_data():
         db.session.add_all(categories)
     
     db.session.commit()
+
+
+def ensure_schema_updates():
+    """Apply lightweight schema updates for SQLite deployments without Alembic."""
+    bind = db.session.get_bind()
+    if bind is None or bind.dialect.name != 'sqlite':
+        return
+
+    table_info = db.session.execute(text("PRAGMA table_info(transaction_items)"))
+    existing_columns = {row[1] for row in table_info}
+
+    if 'unit_cost_at_sale' not in existing_columns:
+        db.session.execute(text("ALTER TABLE transaction_items ADD COLUMN unit_cost_at_sale FLOAT"))
+        db.session.commit()

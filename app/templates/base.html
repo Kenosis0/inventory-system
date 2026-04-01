@@ -64,6 +64,11 @@
             <li><a href="{{ url_for('reports.sales_report') }}">Sales Report</a></li>
             <li><a href="{{ url_for('reports.inventory_report') }}">Inventory Report</a></li>
             <li><a href="{{ url_for('reports.stock_movements') }}">Stock Movements</a></li>
+            <li><a href="{{ url_for('reports.cashflow_report') }}">Cashflow Report</a></li>
+            <li><a href="{{ url_for('reports.profitability_report') }}">Profitability Report</a></li>
+            {% if current_user.is_admin() %}
+            <li><a href="{{ url_for('reports.finance_setup') }}">Finance Setup</a></li>
+            {% endif %}
             {% if current_user.is_admin() %}
             <li><a href="{{ url_for('reports.audit_log') }}">Audit Log</a></li>
             {% endif %}

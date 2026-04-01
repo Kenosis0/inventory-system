@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from app.models import db, Product, Transaction, Category, User
+from app.models import db, Product, Transaction, TransactionItem, Category, User, CashLedger
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import UTC, datetime
 
 main_bp = Blueprint('main', __name__)
 
@@ -21,13 +21,24 @@ def dashboard():
     low_stock_count = len(low_stock_products)
     
     # Today's transactions
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     today_sales = Transaction.query.filter(
         Transaction.transaction_type == 'sale',
         func.date(Transaction.created_at) == today
     ).all()
     today_sales_total = sum(t.total for t in today_sales)
     today_sales_count = len(today_sales)
+
+    today_sale_items = db.session.query(TransactionItem).join(Transaction).filter(
+        Transaction.transaction_type == 'sale',
+        func.date(Transaction.created_at) == today
+    ).all()
+    today_cogs = sum(
+        (item.unit_cost_at_sale if item.unit_cost_at_sale is not None else item.product.cost_price) * item.quantity
+        for item in today_sale_items
+    )
+    today_gross_profit = today_sales_total - today_cogs
+    today_margin_percent = (today_gross_profit / today_sales_total * 100) if today_sales_total > 0 else 0
     
     # Recent transactions (last 5)
     recent_transactions = Transaction.query.order_by(
@@ -38,6 +49,9 @@ def dashboard():
     inventory_value = db.session.query(
         func.sum(Product.quantity * Product.cost_price)
     ).filter(Product.is_active == True).scalar() or 0
+
+    latest_cash_entry = CashLedger.query.order_by(CashLedger.id.desc()).first()
+    available_cash = latest_cash_entry.running_balance if latest_cash_entry else 0.0
     
     # Products by category
     category_stats = db.session.query(
@@ -52,7 +66,11 @@ def dashboard():
         low_stock_products=low_stock_products[:5],  # Show top 5 low stock items
         today_sales_total=today_sales_total,
         today_sales_count=today_sales_count,
+        today_cogs=today_cogs,
+        today_gross_profit=today_gross_profit,
+        today_margin_percent=today_margin_percent,
         recent_transactions=recent_transactions,
         inventory_value=inventory_value,
+        available_cash=available_cash,
         category_stats=category_stats
     )

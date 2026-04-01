@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models import db, User, AuditLog
@@ -32,7 +32,7 @@ def login():
             login_user(user, remember=remember)
             
             # Update last login time
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(UTC)
             
             # Create audit log for login
             audit = AuditLog(

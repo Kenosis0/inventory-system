@@ -34,7 +34,7 @@
   <form method="GET" action="{{ url_for('transactions.list_transactions') }}" class="filters-form">
     <div class="filter-group">
       <label for="search">Search</label>
-      <input type="text" id="search" name="search" value="{{ search }}" placeholder="Reference, customer, supplier...">
+      <input type="text" id="search" name="search" value="{{ search }}" placeholder="Reference #, customer, or supplier name...">
     </div>
     <div class="filter-group">
       <label for="type">Type</label>
@@ -86,7 +86,13 @@
             {{ trans.transaction_type.title() }}
           </span>
         </td>
-        <td>{{ trans.customer_name or trans.supplier_name or '-' }}</td>
+        <td>
+          {% if trans.transaction_type == 'sale' %}
+            {{ trans.customer_name or '-' }}
+          {% else %}
+            {{ trans.supplier.name if trans.supplier else '-' }}
+          {% endif %}
+        </td>
         <td>{{ trans.items.count() }} items</td>
         <td class="amount-cell">₱{{ "{:,.2f}".format(trans.total) }}</td>
         <td>{{ trans.created_at.strftime('%b %d, %Y %H:%M') }}</td>

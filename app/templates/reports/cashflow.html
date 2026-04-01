@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Cashflow Report - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Cashflow Report</h1>
+    <p class="page-subtitle">Track cash inflow, outflow, and running balance</p>
+  </div>
+  {% if current_user.is_admin() %}
+  <div class="page-header-right">
+    <a href="{{ url_for('reports.finance_setup') }}" class="btn btn-secondary">Setup Opening Balance</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="filters-card">
+  <form method="GET" action="{{ url_for('reports.cashflow_report') }}" class="filters-form">
+    <div class="filter-group">
+      <label for="date_from">From Date</label>
+      <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="filter-group">
+      <label for="date_to">To Date</label>
+      <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-secondary">Apply</button>
+      <a href="{{ url_for('reports.cashflow_report') }}" class="btn btn-outline">Reset</a>
+    </div>
+  </form>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(current_balance) }}</span>
+      <span class="stat-label">Current Balance</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(opening_balance) }}</span>
+      <span class="stat-label">Opening Balance (Period)</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value text-success">₱{{ "{:,.2f}".format(inflow) }}</span>
+      <span class="stat-label">Total Inflow</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-details">
+      <span class="stat-value text-danger">₱{{ "{:,.2f}".format(outflow) }}</span>
+      <span class="stat-label">Total Outflow</span>
+    </div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="card-header">
+    <h3>Cash Ledger Entries</h3>
+    <span class="badge badge-info">Closing Balance: ₱{{ "{:,.2f}".format(closing_balance) }}</span>
+  </div>
+  {% if entries %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Reference</th>
+        <th>Amount</th>
+        <th>Running Balance</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in entries %}
+      <tr>
+        <td>{{ entry.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td>
+          <span class="badge badge-{{ 'success' if entry.amount > 0 else 'danger' if entry.amount < 0 else 'secondary' }}">
+            {{ entry.entry_type.replace('_', ' ').title() }}
+          </span>
+        </td>
+        <td>
+          {% if entry.transaction %}
+            <a href="{{ url_for('transactions.view_transaction', id=entry.transaction.id) }}">{{ entry.transaction.reference_number }}</a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td class="{{ 'text-success' if entry.amount > 0 else 'text-danger' if entry.amount < 0 else '' }}">
+          {{ '+' if entry.amount > 0 else '' }}₱{{ "{:,.2f}".format(entry.amount) }}
+        </td>
+        <td><strong>₱{{ "{:,.2f}".format(entry.running_balance) }}</strong></td>
+        <td>{{ entry.notes or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p>No cash ledger entries found for this range.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

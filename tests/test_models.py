@@ -1,6 +1,6 @@
 """Tests for database models."""
 import pytest
-from app.models import User, Category, Product, Transaction, TransactionItem, StockMovement, Role, db
+from app.models import User, Category, Product, Transaction, TransactionItem, StockMovement, CashLedger, Role, db
 
 
 class TestUserModel:
@@ -188,3 +188,72 @@ class TestStockMovementModel:
             assert movement.id is not None
             assert movement.quantity_change == -10
             assert movement.movement_type == 'sale'
+
+
+class TestCashLedgerModel:
+    """Test cases for cash ledger entries and relationships."""
+
+    def test_cash_ledger_entry_creation(self, app, admin_user):
+        """Test creating a cash ledger entry."""
+        with app.app_context():
+            user = db.session.get(User, admin_user.id)
+
+            entry = CashLedger(
+                entry_type='opening_balance',
+                amount=1000.0,
+                running_balance=1000.0,
+                user_id=user.id,
+                notes='Initial setup'
+            )
+            db.session.add(entry)
+            db.session.commit()
+
+            assert entry.id is not None
+            assert entry.entry_type == 'opening_balance'
+            assert entry.amount == 1000.0
+            assert entry.running_balance == 1000.0
+
+    def test_cash_ledger_links_to_transaction_and_user(self, app, admin_user, test_product):
+        """Test cash ledger relationship links for transaction/user."""
+        with app.app_context():
+            user = db.session.get(User, admin_user.id)
+            product = db.session.get(Product, test_product.id)
+
+            transaction = Transaction(
+                transaction_type='sale',
+                reference_number='SAL-20260401120009-CASH01',
+                user_id=user.id,
+                subtotal=30.0,
+                tax=0.0,
+                discount=0.0,
+                total=30.0,
+                customer_name='Cash Link Test'
+            )
+            db.session.add(transaction)
+            db.session.flush()
+
+            item = TransactionItem(
+                transaction_id=transaction.id,
+                product_id=product.id,
+                quantity=2,
+                unit_price=15.0,
+                total_price=30.0,
+                unit_cost_at_sale=10.0,
+            )
+            db.session.add(item)
+
+            entry = CashLedger(
+                entry_type='sale_inflow',
+                amount=30.0,
+                running_balance=30.0,
+                transaction_id=transaction.id,
+                user_id=user.id,
+                notes='Linked entry'
+            )
+            db.session.add(entry)
+            db.session.commit()
+
+            assert entry.transaction is not None
+            assert entry.transaction.reference_number == 'SAL-20260401120009-CASH01'
+            assert entry.user is not None
+            assert entry.user.username == 'admin'

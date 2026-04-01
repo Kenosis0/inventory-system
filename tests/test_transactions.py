@@ -1,6 +1,7 @@
 """Tests for transaction functionality."""
 import pytest
 from app.models import Transaction, TransactionItem, Product, Supplier, StockMovement, db
+from app.models import CashLedger
 
 
 class TestTransactionList:
@@ -15,6 +16,91 @@ class TestTransactionList:
         response = client.get('/transactions/')
         assert response.status_code == 200
         assert b'Transaction' in response.data or b'transaction' in response.data
+
+
+class TestFinanceTracking:
+    """Test cash ledger and COGS snapshot behavior."""
+
+    def test_sale_creates_cash_ledger_and_cost_snapshot(self, client, staff_user, test_product, app):
+        """Sale should create inflow entry and snapshot cost on each line item."""
+        client.post('/', data={
+            'username': 'staff',
+            'password': 'staff123'
+        })
+
+        response = client.post('/transactions/new-sale', data={
+            'customer_name': 'Ledger Customer',
+            'product_id[]': [str(test_product.id)],
+            'quantity[]': ['5'],
+            'discount': '0',
+            'notes': 'Ledger test sale'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+
+        with app.app_context():
+            item = TransactionItem.query.first()
+            assert item is not None
+            assert item.unit_cost_at_sale == pytest.approx(10.0)
+
+            cash_entry = CashLedger.query.filter_by(entry_type='sale_inflow').first()
+            assert cash_entry is not None
+            assert cash_entry.amount == pytest.approx(75.0)
+            assert cash_entry.running_balance == pytest.approx(75.0)
+
+    def test_purchase_creates_cash_ledger_outflow(self, client, staff_user, test_product, app):
+        """Purchase should create outflow entry in cash ledger."""
+        with app.app_context():
+            supplier = Supplier(name='Ledger Supplier')
+            db.session.add(supplier)
+            db.session.commit()
+            supplier_id = supplier.id
+
+        client.post('/', data={
+            'username': 'staff',
+            'password': 'staff123'
+        })
+
+        response = client.post('/transactions/new-purchase', data={
+            'supplier_id': str(supplier_id),
+            'product_id[]': [str(test_product.id)],
+            'quantity[]': ['10'],
+            'unit_cost[]': ['8.00'],
+            'notes': 'Ledger test purchase'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+
+        with app.app_context():
+            cash_entry = CashLedger.query.filter_by(entry_type='purchase_outflow').first()
+            assert cash_entry is not None
+            assert cash_entry.amount == pytest.approx(-80.0)
+            assert cash_entry.running_balance == pytest.approx(-80.0)
+
+    def test_transaction_search_by_supplier_name(self, client, staff_user, test_product, app):
+        """Search should match supplier names for purchase transactions."""
+        with app.app_context():
+            supplier = Supplier(name='Acme Supplies')
+            db.session.add(supplier)
+            db.session.commit()
+            supplier_id = supplier.id
+
+        client.post('/', data={
+            'username': 'staff',
+            'password': 'staff123'
+        })
+
+        client.post('/transactions/new-purchase', data={
+            'supplier_id': str(supplier_id),
+            'product_id[]': [str(test_product.id)],
+            'quantity[]': ['3'],
+            'unit_cost[]': ['9.00'],
+            'notes': 'Search by supplier test'
+        }, follow_redirects=True)
+
+        response = client.get('/transactions/?search=Acme')
+        assert response.status_code == 200
+        assert b'Acme Supplies' in response.data
 
 
 class TestSaleTransaction:

@@ -1,11 +1,34 @@
-from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request
-from flask_login import login_required
-from app.models import db, Transaction, Product, Category, AuditLog, StockMovement
+from datetime import UTC, datetime, timedelta
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from app.models import db, Transaction, Product, Category, AuditLog, StockMovement, CashLedger
 from app.utils.decorators import admin_required
 from sqlalchemy import func
 
 reports_bp = Blueprint('reports', __name__)
+
+
+def _parse_date_range(default_days=30):
+    """Parse report date range from query params with sensible defaults."""
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+
+    if not date_from:
+        date_from = (datetime.now(UTC) - timedelta(days=default_days)).strftime('%Y-%m-%d')
+    if not date_to:
+        date_to = datetime.now(UTC).strftime('%Y-%m-%d')
+
+    try:
+        start_date = datetime.strptime(date_from, '%Y-%m-%d')
+        end_date = datetime.strptime(date_to, '%Y-%m-%d')
+        end_date = datetime.combine(end_date.date(), datetime.max.time())
+    except ValueError:
+        start_date = datetime.now(UTC) - timedelta(days=default_days)
+        end_date = datetime.now(UTC)
+        date_from = start_date.strftime('%Y-%m-%d')
+        date_to = end_date.strftime('%Y-%m-%d')
+
+    return date_from, date_to, start_date, end_date
 
 @reports_bp.route('/sales')
 @login_required
@@ -17,17 +40,17 @@ def sales_report():
     
     # Default to last 30 days
     if not date_from:
-        date_from = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
+        date_from = (datetime.now(UTC) - timedelta(days=30)).strftime('%Y-%m-%d')
     if not date_to:
-        date_to = datetime.utcnow().strftime('%Y-%m-%d')
+        date_to = datetime.now(UTC).strftime('%Y-%m-%d')
     
     try:
         start_date = datetime.strptime(date_from, '%Y-%m-%d')
         end_date = datetime.strptime(date_to, '%Y-%m-%d')
         end_date = datetime.combine(end_date.date(), datetime.max.time())
     except ValueError:
-        start_date = datetime.utcnow() - timedelta(days=30)
-        end_date = datetime.utcnow()
+        start_date = datetime.now(UTC) - timedelta(days=30)
+        end_date = datetime.now(UTC)
     
     # Get sales in date range
     sales = Transaction.query.filter(
@@ -96,6 +119,144 @@ def inventory_report():
         out_of_stock_count=len(out_of_stock),
         category_stats=category_stats
     )
+
+@reports_bp.route('/finance/setup', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def finance_setup():
+    """Set opening cash balance once for the cash ledger."""
+    opening_entry = CashLedger.query.filter_by(entry_type='opening_balance').order_by(CashLedger.id.asc()).first()
+
+    if request.method == 'POST':
+        if opening_entry:
+            flash('Opening cash balance has already been configured.', 'error')
+            return redirect(url_for('reports.cashflow_report'))
+
+        opening_balance_raw = request.form.get('opening_balance', '').strip()
+        notes = request.form.get('notes', '').strip()
+
+        try:
+            opening_balance = float(opening_balance_raw)
+        except ValueError:
+            flash('Opening balance must be a valid number.', 'error')
+            return render_template('reports/finance_setup.html', opening_entry=opening_entry)
+
+        if opening_balance < 0:
+            flash('Opening balance cannot be negative.', 'error')
+            return render_template('reports/finance_setup.html', opening_entry=opening_entry)
+
+        entry = CashLedger(
+            entry_type='opening_balance',
+            amount=opening_balance,
+            running_balance=opening_balance,
+            user_id=current_user.id,
+            notes=notes or 'Opening cash balance',
+        )
+        db.session.add(entry)
+        db.session.commit()
+
+        flash('Opening cash balance has been saved successfully.', 'success')
+        return redirect(url_for('reports.cashflow_report'))
+
+    return render_template('reports/finance_setup.html', opening_entry=opening_entry)
+
+@reports_bp.route('/cashflow')
+@login_required
+def cashflow_report():
+    """Show cash inflow/outflow ledger and running balance."""
+    date_from, date_to, start_date, end_date = _parse_date_range()
+
+    entries = CashLedger.query.filter(
+        CashLedger.created_at >= start_date,
+        CashLedger.created_at <= end_date,
+    ).order_by(CashLedger.created_at.asc(), CashLedger.id.asc()).all()
+
+    previous_entry = CashLedger.query.filter(
+        CashLedger.created_at < start_date,
+    ).order_by(CashLedger.created_at.desc(), CashLedger.id.desc()).first()
+
+    opening_balance = previous_entry.running_balance if previous_entry else 0.0
+    inflow = sum(entry.amount for entry in entries if entry.amount > 0)
+    outflow = abs(sum(entry.amount for entry in entries if entry.amount < 0))
+    closing_balance = opening_balance + inflow - outflow
+
+    latest_entry = CashLedger.query.order_by(CashLedger.id.desc()).first()
+    current_balance = latest_entry.running_balance if latest_entry else 0.0
+
+    return render_template(
+        'reports/cashflow.html',
+        entries=entries,
+        date_from=date_from,
+        date_to=date_to,
+        opening_balance=opening_balance,
+        inflow=inflow,
+        outflow=outflow,
+        closing_balance=closing_balance,
+        current_balance=current_balance,
+    )
+
+@reports_bp.route('/profitability')
+@login_required
+def profitability_report():
+    """Show profitability with COGS snapshot support."""
+    date_from, date_to, start_date, end_date = _parse_date_range()
+
+    sales = Transaction.query.filter(
+        Transaction.transaction_type == 'sale',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date,
+    ).order_by(Transaction.created_at.desc()).all()
+
+    purchases = Transaction.query.filter(
+        Transaction.transaction_type == 'purchase',
+        Transaction.created_at >= start_date,
+        Transaction.created_at <= end_date,
+    ).all()
+
+    rows = []
+    total_revenue = 0.0
+    total_cogs = 0.0
+
+    for sale in sales:
+        revenue = sale.total
+        cogs = 0.0
+
+        for item in sale.items:
+            unit_cost = item.unit_cost_at_sale if item.unit_cost_at_sale is not None else item.product.cost_price
+            cogs += unit_cost * item.quantity
+
+        gross_profit = revenue - cogs
+        margin_percent = (gross_profit / revenue * 100) if revenue > 0 else 0
+
+        rows.append({
+            'transaction': sale,
+            'revenue': revenue,
+            'cogs': cogs,
+            'gross_profit': gross_profit,
+            'margin_percent': margin_percent,
+        })
+
+        total_revenue += revenue
+        total_cogs += cogs
+
+    total_gross_profit = total_revenue - total_cogs
+    overall_margin_percent = (total_gross_profit / total_revenue * 100) if total_revenue > 0 else 0
+    purchase_total = sum(p.total for p in purchases)
+    net_cash_movement = total_revenue - purchase_total
+
+    return render_template(
+        'reports/profitability.html',
+        rows=rows,
+        date_from=date_from,
+        date_to=date_to,
+        total_revenue=total_revenue,
+        total_cogs=total_cogs,
+        total_gross_profit=total_gross_profit,
+        overall_margin_percent=overall_margin_percent,
+        purchase_total=purchase_total,
+        net_cash_movement=net_cash_movement,
+    )
+
 
 @reports_bp.route('/audit')
 @login_required

@@ -1,9 +1,14 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
+
+
+def utc_now():
+    """Generate timezone-aware UTC datetime values for model timestamps."""
+    return datetime.now(UTC)
 
 # User Roles
 class Role:
@@ -20,12 +25,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default=Role.STAFF)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     last_login = db.Column(db.DateTime)
     
     # Relationships
     transactions = db.relationship('Transaction', backref='user', lazy='dynamic')
     audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
+    cash_ledger_entries = db.relationship('CashLedger', backref='user', lazy='dynamic')
     
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -50,7 +56,7 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     description = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     
     # Relationships
     products = db.relationship('Product', backref='category', lazy='dynamic')
@@ -71,8 +77,8 @@ class Supplier(db.Model):
     address = db.Column(db.Text)
     notes = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
     
     # Relationships
     transactions = db.relationship('Transaction', backref='supplier', lazy='dynamic')
@@ -106,8 +112,8 @@ class Product(db.Model):
     
     # Status
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
+    updated_at = db.Column(db.DateTime, default=utc_now, onupdate=utc_now)
     
     # Relationships
     stock_movements = db.relationship('StockMovement', backref='product', lazy='dynamic')
@@ -143,10 +149,11 @@ class Transaction(db.Model):
     customer_name = db.Column(db.String(200))
     
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     
     # Relationships
     items = db.relationship('TransactionItem', backref='transaction', lazy='dynamic', cascade='all, delete-orphan')
+    cash_entries = db.relationship('CashLedger', backref='transaction', lazy='dynamic')
     
     def __repr__(self):
         return f'<Transaction {self.reference_number}>'
@@ -163,6 +170,8 @@ class TransactionItem(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
+    # Snapshot of product cost at time of sale for historical COGS reporting
+    unit_cost_at_sale = db.Column(db.Float)
     
     def __repr__(self):
         return f'<TransactionItem {self.product_id} x {self.quantity}>'
@@ -183,13 +192,32 @@ class StockMovement(db.Model):
     
     reference = db.Column(db.String(100))  # Transaction reference or adjustment reason
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     
     # Relationship to user
     user = db.relationship('User', backref='stock_movements')
     
     def __repr__(self):
         return f'<StockMovement {self.movement_type} {self.quantity_change}>'
+
+
+class CashLedger(db.Model):
+    """Track cash movement and running balance."""
+    __tablename__ = 'cash_ledger'
+
+    id = db.Column(db.Integer, primary_key=True)
+    entry_type = db.Column(db.String(30), nullable=False)  # opening_balance, sale_inflow, purchase_outflow, adjustment
+    amount = db.Column(db.Float, nullable=False)  # Positive=inflow, Negative=outflow
+    running_balance = db.Column(db.Float, nullable=False)
+
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=utc_now)
+
+    def __repr__(self):
+        return f'<CashLedger {self.entry_type} {self.amount}>'
 
 
 class AuditLog(db.Model):
@@ -210,7 +238,7 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(255))
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utc_now)
     
     def __repr__(self):
         return f'<AuditLog {self.action} on {self.table_name}>'

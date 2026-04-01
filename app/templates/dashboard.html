@@ -63,6 +63,59 @@
   </div>
 </div>
 
+<div class="stats-grid" style="margin-top: 16px;">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(available_cash) }}</span>
+      <span class="stat-label">Available Cash</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon gray">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">₱{{ "{:,.2f}".format(today_cogs) }}</span>
+      <span class="stat-label">Today's COGS</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon {{ 'green' if today_gross_profit >= 0 else 'orange' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+        <polyline points="17 6 23 6 23 12"></polyline>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value {{ 'text-success' if today_gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(today_gross_profit) }}</span>
+      <span class="stat-label">Today's Gross Profit</span>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon purple">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3v18h18"></path>
+        <path d="M7 16l4-4 3 3 5-6"></path>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <span class="stat-value">{{ "{:.2f}".format(today_margin_percent) }}%</span>
+      <span class="stat-label">Today's Gross Margin</span>
+    </div>
+  </div>
+</div>
+
 <!-- Quick Actions -->
 <div class="quick-actions">
   <h3>Quick Actions</h3>
