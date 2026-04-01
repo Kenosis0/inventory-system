@@ -13,6 +13,17 @@
 <!-- Date Filter -->
 <div class="filters-card">
   <form method="GET" action="{{ url_for('reports.sales_report') }}" class="filters-form">
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: 500;">Quick Filters</label>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateRange('today')">Today</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateRange('week')">This Week</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateRange('month')">This Month</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateRange('30days')">Last 30 Days</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateRange('all')">All Time</button>
+      </div>
+    </div>
+    
     <div class="filter-group">
       <label for="date_from">From Date</label>
       <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
@@ -26,6 +37,41 @@
     </div>
   </form>
 </div>
+
+<script>
+function setDateRange(range) {
+  const today = new Date();
+  let fromDate, toDate;
+  
+  switch(range) {
+    case 'today':
+      fromDate = new Date(today);
+      toDate = new Date(today);
+      break;
+    case 'week':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - today.getDay());
+      toDate = new Date(today);
+      break;
+    case 'month':
+      fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      toDate = new Date(today);
+      break;
+    case '30days':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - 30);
+      toDate = new Date(today);
+      break;
+    case 'all':
+      document.getElementById('date_from').value = '';
+      document.getElementById('date_to').value = '';
+      return;
+  }
+  
+  document.getElementById('date_from').value = fromDate.toISOString().split('T')[0];
+  document.getElementById('date_to').value = toDate.toISOString().split('T')[0];
+}
+</script>
 
 <!-- Summary Stats -->
 <div class="stats-grid">

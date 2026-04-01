@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Supplier' if supplier else 'Add Supplier' }} - Inventory System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <a href="{{ url_for('suppliers.list_suppliers') }}" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Suppliers
+    </a>
+    <h1>{{ 'Edit Supplier' if supplier else 'Add New Supplier' }}</h1>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" action="{{ url_for('suppliers.edit_supplier', id=supplier.id) if supplier else url_for('suppliers.add_supplier') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <div class="form-section">
+      <h3>Basic Information</h3>
+      
+      <div class="form-group">
+        <label for="name">Supplier Name <span class="required">*</span></label>
+        <input type="text" id="name" name="name" required
+               value="{{ supplier.name if supplier else '' }}"
+               placeholder="Enter supplier name">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="contact_person">Contact Person</label>
+          <input type="text" id="contact_person" name="contact_person"
+                 value="{{ supplier.contact_person if supplier else '' }}"
+                 placeholder="Name of contact person">
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="tel" id="phone" name="phone"
+                 value="{{ supplier.phone if supplier else '' }}"
+                 placeholder="Phone number">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email"
+               value="{{ supplier.email if supplier else '' }}"
+               placeholder="Email address">
+      </div>
+      
+      <div class="form-group">
+        <label for="address">Address</label>
+        <textarea id="address" name="address" rows="3" placeholder="Street address, city, state, postal code">{{ supplier.address if supplier else '' }}</textarea>
+      </div>
+    </div>
+    
+    <div class="form-section">
+      <h3>Additional Notes</h3>
+      <div class="form-group">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="4" placeholder="Any additional notes about this supplier">{{ supplier.notes if supplier else '' }}</textarea>
+      </div>
+    </div>
+    
+    <div class="form-actions">
+      <a href="{{ url_for('suppliers.list_suppliers') }}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-primary">
+        {{ 'Update Supplier' if supplier else 'Create Supplier' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

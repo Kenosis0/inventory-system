@@ -187,7 +187,7 @@ def add_product():
 @login_required
 def view_product(id):
     """View product details."""
-    product = Product.query.get_or_404(id)
+    product = db.get_or_404(Product, id)
     
     # Get recent stock movements
     movements = StockMovement.query.filter_by(product_id=id).order_by(
@@ -204,7 +204,7 @@ def view_product(id):
 @staff_required
 def edit_product(id):
     """Edit an existing product."""
-    product = Product.query.get_or_404(id)
+    product = db.get_or_404(Product, id)
     categories = Category.query.all()
     
     if request.method == 'POST':
@@ -323,7 +323,7 @@ def edit_product(id):
 @admin_required
 def delete_product(id):
     """Soft delete a product (set is_active to False)."""
-    product = Product.query.get_or_404(id)
+    product = db.get_or_404(Product, id)
     
     # Soft delete
     product.is_active = False
@@ -349,7 +349,7 @@ def delete_product(id):
 @staff_required
 def adjust_stock(id):
     """Adjust stock quantity for a product."""
-    product = Product.query.get_or_404(id)
+    product = db.get_or_404(Product, id)
     
     if request.method == 'POST':
         adjustment_type = request.form.get('adjustment_type')  # 'add' or 'subtract'

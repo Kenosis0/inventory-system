@@ -18,6 +18,7 @@
 
 <div class="form-card">
   <form method="POST" action="{{ url_for('products.edit_product', id=product.id) if product else url_for('products.add_product') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="form-section">
       <h3>Basic Information</h3>
       

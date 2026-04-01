@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+import socket
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -17,6 +18,18 @@ def venv_python_path() -> Path:
 
 def run_command(command, cwd=PROJECT_ROOT):
     subprocess.check_call(command, cwd=str(cwd))
+
+
+def get_local_ip():
+    """Get the local network IP address."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "192.168.x.x"  # Fallback if detection fails
 
 
 def ensure_virtual_environment():
@@ -43,7 +56,11 @@ def ensure_instance_folder():
 
 def start_app():
     venv_python = str(venv_python_path())
-    print("[start] Running Inventory System at http://127.0.0.1:5000")
+    local_ip = get_local_ip()
+    print("\n[start] Running Inventory System...")
+    print(f"  → Localhost:  http://127.0.0.1:5000")
+    print(f"  → Network:    http://{local_ip}:5000")
+    print(f"  → Share this address with staff: http://{local_ip}:5000\n")
     run_command([venv_python, "run.py"])
 
 

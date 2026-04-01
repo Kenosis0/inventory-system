@@ -94,7 +94,7 @@ def add_user():
 @admin_required
 def edit_user(id):
     """Edit an existing user (Admin only)."""
-    user = User.query.get_or_404(id)
+    user = db.get_or_404(User, id)
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -189,7 +189,7 @@ def edit_user(id):
 @admin_required
 def delete_user(id):
     """Deactivate a user (Admin only)."""
-    user = User.query.get_or_404(id)
+    user = db.get_or_404(User, id)
     
     if user.id == current_user.id:
         flash('You cannot delete your own account.', 'error')

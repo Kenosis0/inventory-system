@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from app.models import db, Transaction, TransactionItem, Product, StockMovement, AuditLog
+from app.models import db, Transaction, TransactionItem, Product, StockMovement, AuditLog, Supplier
 from app.utils.decorators import staff_required
 from app.utils.helpers import generate_reference_number, validate_positive_integer
 import json
@@ -47,8 +47,7 @@ def list_transactions():
         query = query.filter(
             db.or_(
                 Transaction.reference_number.ilike(f'%{search}%'),
-                Transaction.customer_name.ilike(f'%{search}%'),
-                Transaction.supplier_name.ilike(f'%{search}%')
+                Transaction.customer_name.ilike(f'%{search}%')
             )
         )
     
@@ -103,7 +102,7 @@ def new_sale():
                 errors.append(f'Quantity must be greater than 0 at row {i+1}.')
                 continue
             
-            product = Product.query.get(product_id)
+            product = db.session.get(Product, product_id)
             if not product:
                 errors.append(f'Product not found at row {i+1}.')
                 continue
@@ -204,8 +203,10 @@ def new_sale():
 @staff_required
 def new_purchase():
     """Create a new purchase/restock transaction."""
+    suppliers = Supplier.query.filter_by(is_active=True).order_by(Supplier.name).all()
+    
     if request.method == 'POST':
-        supplier_name = request.form.get('supplier_name', '').strip()
+        supplier_id = request.form.get('supplier_id')
         notes = request.form.get('notes', '').strip()
         
         # Get items from form
@@ -215,11 +216,18 @@ def new_purchase():
         
         if not product_ids or not any(product_ids):
             flash('Please add at least one product to the purchase.', 'error')
-            return render_template('transactions/purchase_form.html')
+            return render_template('transactions/purchase_form.html', suppliers=suppliers)
         
-        if not supplier_name:
-            flash('Please enter a supplier name.', 'error')
-            return render_template('transactions/purchase_form.html')
+        if not supplier_id:
+            flash('Please select a supplier.', 'error')
+            return render_template('transactions/purchase_form.html', suppliers=suppliers)
+        
+        try:
+            supplier_id = int(supplier_id)
+            supplier = db.get_or_404(Supplier, supplier_id)
+        except (ValueError, TypeError):
+            flash('Invalid supplier selected.', 'error')
+            return render_template('transactions/purchase_form.html', suppliers=suppliers)
         
         # Validate and prepare items
         items = []
@@ -246,7 +254,7 @@ def new_purchase():
                 errors.append(f'Unit cost cannot be negative at row {i+1}.')
                 continue
             
-            product = Product.query.get(product_id)
+            product = db.session.get(Product, product_id)
             if not product:
                 errors.append(f'Product not found at row {i+1}.')
                 continue
@@ -263,18 +271,18 @@ def new_purchase():
         if errors:
             for error in errors:
                 flash(error, 'error')
-            return render_template('transactions/purchase_form.html')
+            return render_template('transactions/purchase_form.html', suppliers=suppliers)
         
         # Create transaction
         transaction = Transaction(
             transaction_type='purchase',
             reference_number=generate_reference_number('PUR'),
             user_id=current_user.id,
+            supplier_id=supplier_id,
             subtotal=subtotal,
             tax=0,
             discount=0,
             total=subtotal,
-            supplier_name=supplier_name,
             notes=notes or None
         )
         db.session.add(transaction)
@@ -304,7 +312,7 @@ def new_purchase():
                 quantity_before=product.quantity,
                 quantity_after=product.quantity + quantity,
                 reference=transaction.reference_number,
-                notes=f'Purchase from {supplier_name}'
+                notes=f'Purchase from {supplier.name}'
             )
             db.session.add(movement)
             
@@ -324,7 +332,8 @@ def new_purchase():
                 'type': 'purchase',
                 'reference': transaction.reference_number,
                 'total': subtotal,
-                'supplier': supplier_name,
+                'supplier_id': supplier_id,
+                'supplier_name': supplier.name,
                 'items_count': len(items)
             }),
             ip_address=request.remote_addr,
@@ -336,13 +345,13 @@ def new_purchase():
         flash(f'Purchase {transaction.reference_number} recorded successfully. Total: ₱{subtotal:,.2f}', 'success')
         return redirect(url_for('transactions.view_transaction', id=transaction.id))
     
-    return render_template('transactions/purchase_form.html')
+    return render_template('transactions/purchase_form.html', suppliers=suppliers)
 
 @transactions_bp.route('/<int:id>')
 @login_required
 def view_transaction(id):
     """View transaction details."""
-    transaction = Transaction.query.get_or_404(id)
+    transaction = db.get_or_404(Transaction, id)
     items = transaction.items.all()
     
     return render_template('transactions/view.html',

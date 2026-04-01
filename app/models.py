@@ -59,6 +59,28 @@ class Category(db.Model):
         return f'<Category {self.name}>'
 
 
+class Supplier(db.Model):
+    """Supplier model for managing suppliers."""
+    __tablename__ = 'suppliers'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), unique=True, nullable=False)
+    contact_person = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    transactions = db.relationship('Transaction', backref='supplier', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<Supplier {self.name}>'
+
+
 class Product(db.Model):
     """Product model for inventory items."""
     __tablename__ = 'products'
@@ -115,9 +137,8 @@ class Transaction(db.Model):
     discount = db.Column(db.Float, nullable=False, default=0.0)
     total = db.Column(db.Float, nullable=False, default=0.0)
     
-    # For purchases - supplier info
-    supplier_name = db.Column(db.String(200))
-    
+    # For purchases - supplier link
+    supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'), nullable=True)
     # For sales - customer info (optional)
     customer_name = db.Column(db.String(200))
     

@@ -27,6 +27,7 @@
     
     <!-- Login Form -->
     <form class="login-form" method="POST" action="{{ url_for('auth.login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" placeholder="Enter username" required>
@@ -53,13 +54,6 @@
         Sign In
       </button>
     </form>
-    
-    <!-- Test Accounts -->
-    <div class="credentials-info">
-      <p class="credentials-title">Test Accounts:</p>
-      <p class="credentials-item">Admin: admin / admin123</p>
-      <p class="credentials-item">Staff: staff / staff123</p>
-    </div>
   </div>
 </div>
 {% endblock %}

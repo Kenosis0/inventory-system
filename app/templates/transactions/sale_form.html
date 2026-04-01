@@ -19,6 +19,7 @@
 
 <div class="form-card">
   <form method="POST" action="{{ url_for('transactions.new_sale') }}" id="saleForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="form-section">
       <h3>Customer Information (Optional)</h3>
       

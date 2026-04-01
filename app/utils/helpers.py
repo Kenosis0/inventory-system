@@ -2,11 +2,17 @@ import json
 from datetime import datetime
 from flask import request
 from flask_login import current_user
+import uuid
 
 def generate_reference_number(prefix='TXN'):
-    """Generate a unique reference number for transactions."""
+    """Generate a unique reference number for transactions.
+    
+    Format: {PREFIX}-{TIMESTAMP}-{RANDOM_SUFFIX}
+    Ensures uniqueness even if transactions occur in the same second.
+    """
     timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
-    return f"{prefix}-{timestamp}"
+    random_suffix = uuid.uuid4().hex[:6].upper()
+    return f"{prefix}-{timestamp}-{random_suffix}"
 
 def log_audit(db, AuditLog, action, table_name, record_id=None, old_values=None, new_values=None):
     """

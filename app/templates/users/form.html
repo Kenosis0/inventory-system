@@ -18,6 +18,7 @@
 
 <div class="form-card">
   <form method="POST" action="{{ url_for('users.edit_user', id=user.id) if user else url_for('users.add_user') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="form-section">
       <h3>Account Information</h3>
       
