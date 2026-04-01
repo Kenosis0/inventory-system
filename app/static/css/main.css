@@ -1417,6 +1417,35 @@ body.login-page {
   overflow-x: auto;
 }
 
+/* ===== SORTABLE COLUMN HEADERS ===== */
+.sort-header {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+}
+
+.sort-header:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.sort-header.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.sort-indicator {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
 /* ===== LOGIN PAGE STYLES ===== */
 .login-container {
   display: flex;

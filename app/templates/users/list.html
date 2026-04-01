@@ -73,6 +73,7 @@
           {% if user.id != current_user.id %}
           <form method="POST" action="{{ url_for('users.delete_user', id=user.id) }}" style="display: inline;"
                 onsubmit="return confirm('Are you sure you want to deactivate this user?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <button type="submit" class="btn-icon danger" title="Deactivate">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>

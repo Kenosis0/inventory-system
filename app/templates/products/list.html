@@ -9,6 +9,14 @@
     <p class="page-subtitle">Manage your inventory items</p>
   </div>
   <div class="page-header-right">
+    <a href="{{ url_for('products.export_products') }}" class="btn btn-secondary" title="Download as Excel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      Export
+    </a>
     <a href="{{ url_for('products.add_product') }}" class="btn btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -56,11 +64,31 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>SKU</th>
-        <th>Name</th>
+        <th>
+          <a href="{{ url_for('products.list_products', category=current_category, search=search, stock=stock_filter, sort='sku', order='asc' if sort_by == 'sku' and sort_order == 'desc' else 'desc' if sort_by == 'sku' else 'asc') }}" class="sort-header {% if sort_by == 'sku' %}active{% endif %}">
+            SKU
+            {% if sort_by == 'sku' %}<span class="sort-indicator">{{ '↑' if sort_order == 'asc' else '↓' }}</span>{% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="{{ url_for('products.list_products', category=current_category, search=search, stock=stock_filter, sort='name', order='asc' if sort_by == 'name' and sort_order == 'desc' else 'desc' if sort_by == 'name' else 'asc') }}" class="sort-header {% if sort_by == 'name' %}active{% endif %}">
+            Name
+            {% if sort_by == 'name' %}<span class="sort-indicator">{{ '↑' if sort_order == 'asc' else '↓' }}</span>{% endif %}
+          </a>
+        </th>
         <th>Category</th>
-        <th>Price</th>
-        <th>Stock</th>
+        <th>
+          <a href="{{ url_for('products.list_products', category=current_category, search=search, stock=stock_filter, sort='price', order='asc' if sort_by == 'price' and sort_order == 'desc' else 'desc' if sort_by == 'price' else 'asc') }}" class="sort-header {% if sort_by == 'price' %}active{% endif %}">
+            Price
+            {% if sort_by == 'price' %}<span class="sort-indicator">{{ '↑' if sort_order == 'asc' else '↓' }}</span>{% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="{{ url_for('products.list_products', category=current_category, search=search, stock=stock_filter, sort='stock', order='asc' if sort_by == 'stock' and sort_order == 'desc' else 'desc' if sort_by == 'stock' else 'asc') }}" class="sort-header {% if sort_by == 'stock' %}active{% endif %}">
+            Stock
+            {% if sort_by == 'stock' %}<span class="sort-indicator">{{ '↑' if sort_order == 'asc' else '↓' }}</span>{% endif %}
+          </a>
+        </th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -124,13 +152,13 @@
   {% if products.pages > 1 %}
   <div class="pagination">
     {% if products.has_prev %}
-    <a href="{{ url_for('products.list_products', page=products.prev_num, category=current_category, search=search, stock=stock_filter) }}" class="page-link">&laquo; Previous</a>
+    <a href="{{ url_for('products.list_products', page=products.prev_num, category=current_category, search=search, stock=stock_filter, sort=sort_by, order=sort_order) }}" class="page-link">&laquo; Previous</a>
     {% endif %}
     
     <span class="page-info">Page {{ products.page }} of {{ products.pages }}</span>
     
     {% if products.has_next %}
-    <a href="{{ url_for('products.list_products', page=products.next_num, category=current_category, search=search, stock=stock_filter) }}" class="page-link">Next &raquo;</a>
+    <a href="{{ url_for('products.list_products', page=products.next_num, category=current_category, search=search, stock=stock_filter, sort=sort_by, order=sort_order) }}" class="page-link">Next &raquo;</a>
     {% endif %}
   </div>
   {% endif %}

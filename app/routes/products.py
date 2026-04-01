@@ -10,7 +10,7 @@ products_bp = Blueprint('products', __name__)
 @products_bp.route('/')
 @login_required
 def list_products():
-    """List all products with filtering and search."""
+    """List all products with filtering, search, and sorting."""
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
@@ -18,6 +18,8 @@ def list_products():
     category_id = request.args.get('category', type=int)
     search = request.args.get('search', '').strip()
     stock_filter = request.args.get('stock')  # 'low', 'out', 'all'
+    sort_by = request.args.get('sort', 'name')  # Default sort by name
+    sort_order = request.args.get('order', 'asc')  # Default ascending
     
     # Build query
     query = Product.query.filter_by(is_active=True)
@@ -39,8 +41,25 @@ def list_products():
     elif stock_filter == 'out':
         query = query.filter(Product.quantity == 0)
     
-    # Order by name
-    query = query.order_by(Product.name)
+    # Apply sorting
+    if sort_order == 'desc':
+        if sort_by == 'sku':
+            query = query.order_by(Product.sku.desc())
+        elif sort_by == 'price':
+            query = query.order_by(Product.selling_price.desc())
+        elif sort_by == 'stock':
+            query = query.order_by(Product.quantity.desc())
+        else:  # name
+            query = query.order_by(Product.name.desc())
+    else:  # asc
+        if sort_by == 'sku':
+            query = query.order_by(Product.sku.asc())
+        elif sort_by == 'price':
+            query = query.order_by(Product.selling_price.asc())
+        elif sort_by == 'stock':
+            query = query.order_by(Product.quantity.asc())
+        else:  # name
+            query = query.order_by(Product.name.asc())
     
     # Paginate
     products = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -51,8 +70,94 @@ def list_products():
         categories=categories,
         current_category=category_id,
         search=search,
-        stock_filter=stock_filter
+        stock_filter=stock_filter,
+        sort_by=sort_by,
+        sort_order=sort_order
     )
+
+@products_bp.route('/export')
+@login_required
+def export_products():
+    """Export all active products to Excel file."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from datetime import datetime
+    from flask import send_file
+    
+    # Get all active products sorted by name
+    products = Product.query.filter_by(is_active=True).order_by(Product.name).all()
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Products"
+    
+    # Define styles
+    header_fill = PatternFill(start_color="7F1416", end_color="7F1416", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    left_align = Alignment(horizontal="left", vertical="center")
+    
+    # Add headers
+    headers = ["SKU", "Name", "Category", "Description", "Cost Price", "Selling Price", "Current Stock", "Reorder Level", "Status"]
+    ws.append(headers)
+    
+    # Style header row
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_align
+        cell.border = border
+    
+    # Add product data
+    for product in products:
+        status = "Out of Stock" if product.quantity == 0 else ("Low Stock" if product.is_low_stock else "In Stock")
+        ws.append([
+            product.sku,
+            product.name,
+            product.category.name,
+            product.description or "",
+            product.cost_price,
+            product.selling_price,
+            product.quantity,
+            product.reorder_level,
+            status
+        ])
+    
+    # Style data rows and adjust columns
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        for cell in row:
+            cell.border = border
+            cell.alignment = left_align
+            if cell.column in [5, 6]:  # Price columns
+                cell.number_format = '₱#,##0.00'
+            elif cell.column in [1, 7, 8]:  # SKU, Stock, Reorder columns
+                cell.alignment = center_align
+    
+    # Adjust column widths
+    ws.column_dimensions['A'].width = 12
+    ws.column_dimensions['B'].width = 35
+    ws.column_dimensions['C'].width = 18
+    ws.column_dimensions['D'].width = 30
+    ws.column_dimensions['E'].width = 12
+    ws.column_dimensions['F'].width = 14
+    ws.column_dimensions['G'].width = 14
+    ws.column_dimensions['H'].width = 14
+    ws.column_dimensions['I'].width = 14
+    
+    # Generate filename with timestamp
+    filename = f"products_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    filepath = f"instance/{filename}"
+    wb.save(filepath)
+    
+    # Send file
+    return send_file(filepath, as_attachment=True, download_name=filename)
 
 @products_bp.route('/add', methods=['GET', 'POST'])
 @login_required
