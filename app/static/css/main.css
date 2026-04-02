@@ -1907,7 +1907,8 @@ a.mobile-card-title:hover {
     height: calc(var(--mobile-bottom-bar-height) + env(safe-area-inset-bottom, 0px));
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
     background: var(--bg-white);
-    border-top: 1px solid var(--border-color);
+    border-top: 2px solid;
+    border-top-color: #fccb0a;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 6px;

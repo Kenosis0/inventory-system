@@ -3,49 +3,93 @@
 ## Course Subject
 Human Computer Interaction 2
 
-## Purpose of This Guide
-This guide explains how to operate the system safely and consistently in a school bookstore context. It is written for both daily users and supervisors so that operations remain accurate, traceable, and easy to review.
+## Document Type
+This file is the official **Manual, Guide, and Rules** for operating the web application.
 
-This document answers three practical questions:
+Use this document as the standard operating procedure (SOP) for:
 
-1. How should the system be used during normal daily operations?
-2. What rules must always be followed to avoid data quality problems?
-3. What checks should be done before demonstration, reporting, or handover?
+1. day-to-day operations
+2. correct webapp navigation
+3. preventing user mistakes
+4. protecting the database from unsafe actions
 
-## 1. Who Should Use the System
-The system is designed for internal school use only. It is intended for bookstore staff, school administration, and supervised student assistants (if approved by the school).
+## 1. Purpose and Scope
+This system is for internal school bookstore use only.
 
-It is not intended for public internet exposure.
+This manual explains:
 
-## 2. Access Roles and Responsibility Boundaries
-The system enforces role-based access to prevent accidental misuse.
+1. what each role should do
+2. where to click in the webapp for each task
+3. the correct sequence of operations
+4. what to do and what not to do
+5. what to do when errors happen
 
-### 2.1 Admin Role
-Admins are responsible for system governance and high-impact records.
+## 2. Roles and Access Boundaries
 
-Admin responsibilities include:
+### 2.1 Admin
+Admin can:
 
-- managing user accounts
-- managing suppliers
-- setting opening cash balance (one-time setup)
-- accessing all reports, including audit logs
-- ensuring backup and recovery discipline
+1. manage users
+2. manage suppliers
+3. configure opening cash balance (Finance Setup)
+4. access all reports, including Audit Log
 
-### 2.2 Staff Role
-Staff members are responsible for day-to-day operations.
+Admin must:
 
-Staff responsibilities include:
+1. enforce backup discipline
+2. monitor unusual activity
+3. avoid sharing admin credentials
 
-- maintaining products and stock adjustments
-- processing sales and purchases
-- monitoring low-stock alerts
-- reviewing operational reports
+### 2.2 Staff
+Staff can:
 
-Staff should not perform admin-only tasks through shared credentials.
+1. manage products
+2. process sales and purchases
+3. adjust stock with reasons
+4. view operational reports
 
-## 3. Startup and Shutdown Procedure
+Staff cannot:
 
-### 3.1 Start the System
+1. manage users
+2. manage suppliers
+3. access admin-only pages (Finance Setup and Audit Log)
+
+## 3. Navigation Map of the Webapp
+
+### 3.1 Desktop Navigation (Sidebar)
+Main pages:
+
+1. Dashboard
+2. Products
+3. Transactions
+4. Reports
+5. Users (Admin only)
+6. Suppliers (Admin only)
+
+Reports submenu:
+
+1. Sales Report
+2. Inventory Report
+3. Stock Movements
+4. Cashflow Report
+5. Profitability Report
+6. Finance Setup (Admin only)
+7. Audit Log (Admin only)
+
+### 3.2 Mobile Navigation
+Bottom app bar:
+
+1. Home
+2. Products
+3. Txns
+4. Reports
+5. Menu
+
+Use **Menu** to open the drawer and access secondary pages such as Users, Suppliers, Profile, and Logout.
+
+## 4. Startup and Shutdown Procedure
+
+### 4.1 Start the System
 1. Open terminal in the project folder.
 2. Run:
 
@@ -53,180 +97,247 @@ Staff should not perform admin-only tasks through shared credentials.
 python start.py
 ```
 
-3. Wait for the startup output to confirm URLs.
-4. Open the browser using the local URL:
+3. Wait for startup output.
+4. Open:
 
 ```text
 http://127.0.0.1:5000
 ```
 
-### 3.2 Stop the System
-Press `CTRL + C` in the terminal running the app.
+### 4.2 Stop the System
+Press `CTRL + C` in the running terminal.
 
-Do not leave multiple active server processes using the same SQLite file.
+Never keep multiple server instances running against the same `instance/inventory.db`.
 
-## 4. Recommended Daily Operating Flow
-The best results come from using a consistent daily sequence.
+## 5. First-Time Setup SOP (Admin)
+Run this sequence on a new or reset database.
 
-### 4.1 Opening routine
-1. Log in with the correct account role.
-2. Open Dashboard and check:
-- low stock count
-- available cash
-- recent transaction activity
-3. If inventory is low, encode purchase transactions before peak selling periods.
+1. Login as admin.
+2. Open Reports -> Finance Setup.
+3. Enter opening balance once, then save.
+4. Open Suppliers -> Add Supplier and encode suppliers first.
+5. Open Products -> Add Product and encode initial catalog.
+6. Open Users and create staff accounts.
+7. Process a small purchase transaction to validate stock and cashflow.
+8. Verify Dashboard, Cashflow, and Inventory report values.
 
-### 4.2 During operations
-1. Encode purchases as inventory arrives.
-2. Process sales as they happen.
-3. Use stock adjustment only for real corrections (count mismatch, damaged item, approved reconciliation).
-4. Include meaningful notes when requested by form fields.
+## 6. Daily Operating Workflow SOP
 
-### 4.3 Closing routine
-1. Review Sales, Inventory, Cashflow, and Profitability reports.
-2. Confirm no suspicious stock movements or unusual audit activity.
-3. Back up the database when needed (especially before major edits, script runs, or demos).
+### 6.1 Opening Checklist
+1. Login with correct role.
+2. Go to Dashboard.
+3. Check low stock alerts.
+4. Check available cash and recent transactions.
+5. If stock is low, prioritize purchase entries first.
 
-## 5. Module-by-Module Usage Instructions
+### 6.2 Operating Cycle
+1. Record incoming stock through New Purchase.
+2. Process customer sales through New Sale.
+3. Use stock adjustment only for corrections.
+4. Keep notes meaningful for adjustments and special cases.
 
-### 5.1 Product Management
-Use Products to maintain inventory records.
+### 6.3 Closing Checklist
+1. Open Sales Report and verify totals.
+2. Open Inventory Report and verify low/out-of-stock items.
+3. Open Cashflow and Profitability reports.
+4. Admin reviews Audit Log for unusual actions.
+5. Perform backup if needed.
 
-Standard practice:
+## 7. Click-by-Click Task Procedures
 
-1. Keep SKU unique and stable.
-2. Enter accurate pricing (cost and selling price).
-3. Set practical reorder levels based on item velocity.
-4. Use low-stock views for restock planning.
-5. Use Excel export for offline review and supervisor reporting.
+### 7.1 Add Product
+Path: **Sidebar -> Products -> Add Product**
 
-### 5.2 Supplier Management (Admin)
-Use Suppliers for procurement source control.
+Steps:
 
-Standard practice:
+1. Fill SKU (must be unique).
+2. Fill Name and Category.
+3. Fill Cost Price and Selling Price.
+4. Fill Quantity and Reorder Level.
+5. Save product.
+6. Verify it appears in Products list.
 
-1. Keep supplier names normalized (avoid near-duplicate spellings).
-2. Maintain contact details for follow-up.
-3. Use supplier records when processing purchases so procurement history remains analyzable.
+### 7.2 Edit Product
+Path: **Products -> row action -> Edit**
 
-### 5.3 Purchase Transactions
-Use `Transactions > New Purchase`.
+Steps:
 
-Required workflow:
+1. Open product edit form.
+2. Update allowed fields.
+3. Save.
+4. Verify updated values in product detail page.
+
+### 7.3 Adjust Stock (Correction Only)
+Path: **Products -> row action -> Adjust Stock**
+
+Steps:
+
+1. Select adjustment type (add or subtract).
+2. Enter quantity.
+3. Enter required reason.
+4. Save adjustment.
+5. Verify new quantity and stock movement history.
+
+Rule: never use stock adjustment to replace proper sale/purchase transactions.
+
+### 7.4 Create Purchase Transaction
+Path: **Sidebar -> Transactions -> New Purchase**
+
+Steps:
 
 1. Select supplier.
-2. Add line items with quantity and unit cost.
-3. Submit and verify generated reference.
-4. Confirm stock increased correctly.
-5. Confirm cash outflow appears in cashflow report.
+2. Add each product line.
+3. Enter quantity and unit cost per line.
+4. Submit.
+5. Verify reference number appears.
+6. Verify product quantity increased.
+7. Verify cash outflow in Cashflow report.
 
-### 5.4 Sale Transactions
-Use `Transactions > New Sale`.
+### 7.5 Create Sale Transaction
+Path: **Sidebar -> Transactions -> New Sale**
 
-Required workflow:
+Steps:
 
-1. Add product line items and quantities.
-2. Confirm stock availability warnings are resolved before submit.
-3. Submit and verify generated reference.
-4. Confirm stock decreased correctly.
-5. Confirm inflow appears in cashflow and contributes to profitability reporting.
+1. Add products and quantities.
+2. Confirm stock is sufficient.
+3. Add customer name (optional) and notes when needed.
+4. Submit.
+5. Verify reference number appears.
+6. Verify product quantity decreased.
+7. Verify inflow in Cashflow report and impact in Profitability report.
 
-### 5.5 Stock Adjustment
-Use stock adjustment only for correction cases.
+### 7.6 Manage Suppliers (Admin)
+Path: **Sidebar -> Suppliers**
 
-Required discipline:
+Steps:
 
-1. Choose correct adjustment direction.
-2. Enter valid quantity.
-3. Provide clear reason text.
-4. Verify resulting stock and movement history.
+1. Add supplier with complete contact details.
+2. Edit supplier when details change.
+3. Deactivate supplier instead of deleting history.
+4. Validate supplier appears in purchase form.
 
-### 5.6 Reports and Interpretation
-Each report serves a different operational question:
+### 7.7 Manage Users (Admin)
+Path: **Sidebar -> Users**
 
-- Sales report: How much sold and how often in a period?
-- Inventory report: What is the stock/value posture right now?
-- Stock movements: Why did stock change for a specific item?
-- Cashflow: How did cash move over time and what is current balance?
-- Profitability: Is revenue covering COGS and by how much?
-- Audit log (admin): Who changed what, and when?
+Steps:
 
-## 6. Mobile Usage Notes
-The system supports mobile operation with responsive patterns optimized for readability.
+1. Add user with correct role.
+2. Edit role/status only when authorized.
+3. Do not deactivate your own active admin account.
+4. Verify login works for newly created account.
 
-What users should expect on mobile:
+### 7.8 Generate Reports
+Path: **Sidebar -> Reports -> select report**
 
-- a bottom app bar for fast access to primary pages
-- a menu trigger that opens the sidebar drawer for secondary/admin pages
-- card views for user/supplier management areas
-- compact priority-column tables for transaction and report-heavy pages
-- dashboard KPI compaction with expandable secondary finance details
+Use each report for the right question:
 
-If data appears condensed on small screens, use row-level expandable sections and details toggles provided in-table.
+1. Sales Report: sales amount and volume by date range
+2. Inventory Report: stock posture and value
+3. Stock Movements: why stock changed
+4. Cashflow Report: inflow/outflow and running balance
+5. Profitability Report: revenue vs COGS and margin
+6. Audit Log (Admin): who changed what and when
 
-## 7. Strict Rules: Required and Prohibited Actions
+## 8. Rules to Prevent Errors and Database Damage
 
-### 7.1 Required actions (DO)
-1. Keep SKU values unique and consistent.
-2. Record purchases before selling when stock is insufficient.
-3. Check low-stock indicators daily.
-4. Stop the app before backup or restore operations.
-5. Use descriptive notes for adjustments and unusual transactions.
-6. Reserve admin credentials for admin-level work only.
-7. Review reports routinely for anomalies.
+### 8.1 DO (Required)
+1. Keep SKU values unique.
+2. Process purchases before sales when stock is low.
+3. Use transaction forms for normal movement of stock.
+4. Use stock adjustment only for correction cases with clear notes.
+5. Stop app before backup or restore.
+6. Verify reports at end of day.
+7. Keep admin access restricted.
 
-### 7.2 Prohibited actions (DO NOT)
-1. Do not manually edit `instance/inventory.db` while the app is running.
-2. Do not create fake adjustments to force inventory values.
-3. Do not share admin credentials with non-admin users.
-4. Do not deactivate your own active admin account.
-5. Do not run multiple app instances against the same SQLite file.
-6. Do not skip backups before risky maintenance changes.
+### 8.2 DO NOT (Prohibited)
+1. Do not edit `instance/inventory.db` manually while app is running.
+2. Do not run more than one server instance on the same DB file.
+3. Do not use fake adjustments to force balances.
+4. Do not skip backup before risky maintenance.
+5. Do not share admin credentials.
+6. Do not deactivate your own last active admin account.
 
-## 8. Backup and Recovery Procedure
+## 9. Common Errors and Correct Action
 
-### 8.1 Backup
-1. Stop the app.
-2. Copy database with timestamped name:
+| Error or situation | Most likely cause | Correct action |
+| --- | --- | --- |
+| Invalid username/password | wrong credentials | retry carefully, reset through admin if needed |
+| SKU already exists | duplicate SKU entry | use existing SKU record or create new unique SKU |
+| Insufficient stock on sale | sale quantity exceeds available stock | reduce quantity or encode purchase first |
+| Supplier required on purchase | no supplier selected | select valid supplier before submit |
+| Quantity must be valid | non-numeric or negative input | enter whole number >= 0 |
+| Cannot subtract more than stock | invalid stock adjustment | reduce adjustment or re-check physical count |
+| Access denied page | wrong role | login with authorized account |
+
+## 10. Database Protection Protocol
+
+### 10.1 Strict Safety Rules
+1. Always stop the app before direct DB file operations.
+2. Always back up before running scripts or large data changes.
+3. Never run tests against the only copy of demo data without backup.
+4. Never perform manual SQLite edits during active app runtime.
+
+### 10.2 Backup Procedure
+1. Stop app.
+2. Run:
 
 ```bash
 copy instance\inventory.db instance\inventory.db.backup-YYYY-MM-DD-HH-MM-SS
 ```
 
-3. Restart app if needed.
+3. Confirm backup file exists.
 
-### 8.2 Restore
-1. Stop the app.
-2. Restore from backup:
+### 10.3 Restore Procedure
+1. Stop app.
+2. Run:
 
 ```bash
 copy /Y instance\inventory.db.backup-YYYY-MM-DD-HH-MM-SS instance\inventory.db
 ```
 
-3. Start app and validate login, dashboard, products, and transactions pages.
+3. Restart app.
+4. Validate:
+1. login works
+2. Dashboard loads
+3. Products list loads
+4. Transactions list loads
+5. latest expected records are present
 
-## 9. Demonstration Checklist (Reviewer/Professor)
-Use this checklist before formal project demonstration:
+## 11. Safe Maintenance Workflow
+Use this sequence before maintenance tasks (normalization script, resets, heavy refactors, test runs against shared DB):
 
-1. Login and role behavior shown (admin vs staff).
-2. Dashboard KPIs and chart widgets displayed.
-3. One purchase flow completed and reflected in stock/cashflow.
-4. One sale flow completed and reflected in stock/profitability.
-5. Stock movement history shown for traceability.
-6. Audit log sample shown (admin view).
-7. Product export to Excel demonstrated.
+1. Stop app.
+2. Create backup.
+3. Perform maintenance task.
+4. Start app and run smoke checks.
+5. If results are wrong, stop app and restore immediately.
 
-## 10. Operational Limits and Scope Notes
-- SQLite is suitable for school demo and low-concurrency operations.
-- Current deployment profile is local/dev-oriented.
-- Production-grade hardening (deployment controls, migration strategy, scaling) is outside immediate class-scope operations.
+## 12. Demonstration SOP for Reviewers or Professor
+1. Login and show role difference.
+2. Show Dashboard summary and charts.
+3. Encode one purchase transaction.
+4. Encode one sale transaction.
+5. Show Stock Movements for traceability.
+6. Show Cashflow and Profitability updates.
+7. Show Audit Log as governance proof.
+8. Export products to Excel.
 
-## 11. Escalation Guidance
-Escalate to admin/supervisor when:
+## 13. Escalation Procedure
+Escalate to admin/supervisor immediately when:
 
-1. repeated login issues occur for active users
-2. stock and transaction totals appear inconsistent
-3. unusual audit entries appear without a known operator action
-4. database recovery is required after failed maintenance
+1. repeated login issues happen for active accounts
+2. stock totals and transaction records do not match
+3. audit log shows suspicious actions
+4. database restore is required
 
-Consistent use of this guide protects both data quality and demonstration reliability.
+## 14. Final Operating Principle
+If a user is unsure what to do, do not guess and do not force data edits.
+
+Follow this order:
+
+1. pause
+2. check this manual
+3. back up database
+4. ask admin/supervisor
+
+This protects both data integrity and operational reliability.
