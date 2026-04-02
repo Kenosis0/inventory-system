@@ -62,42 +62,47 @@
 <!-- Transactions Table -->
 <div class="table-card">
   {% if transactions.items %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Reference</th>
-        <th>Type</th>
-        <th>Customer/Supplier</th>
-        <th>Items</th>
-        <th>Total</th>
-        <th>Date</th>
-        <th>User</th>
-        <th>Actions</th>
+        <th class="priority-col-1">Reference</th>
+        <th class="priority-col-2">Type</th>
+        <th class="priority-col-1">Customer/Supplier</th>
+        <th class="priority-col-3">Items</th>
+        <th class="priority-col-1">Total</th>
+        <th class="priority-col-2">Date</th>
+        <th class="priority-col-3">User</th>
+        <th class="priority-col-1">Actions</th>
       </tr>
     </thead>
     <tbody>
       {% for trans in transactions.items %}
       <tr>
-        <td class="reference-cell">
+        <td class="reference-cell priority-col-1">
           <a href="{{ url_for('transactions.view_transaction', id=trans.id) }}">{{ trans.reference_number }}</a>
         </td>
-        <td>
+        <td class="priority-col-2">
           <span class="badge badge-{{ 'success' if trans.transaction_type == 'sale' else 'info' }}">
             {{ trans.transaction_type.title() }}
           </span>
         </td>
-        <td>
+        <td class="priority-col-1">
           {% if trans.transaction_type == 'sale' %}
             {{ trans.customer_name or '-' }}
           {% else %}
             {{ trans.supplier.name if trans.supplier else '-' }}
           {% endif %}
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Date:</strong> {{ trans.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+            <span class="meta-line"><strong>Items:</strong> {{ trans.items.count() }}</span>
+            <span class="meta-line"><strong>User:</strong> {{ trans.user.username }}</span>
+          </div>
         </td>
-        <td>{{ trans.items.count() }} items</td>
-        <td class="amount-cell">₱{{ "{:,.2f}".format(trans.total) }}</td>
-        <td>{{ trans.created_at.strftime('%b %d, %Y %H:%M') }}</td>
-        <td>{{ trans.user.username }}</td>
-        <td class="actions-cell">
+        <td class="priority-col-3">{{ trans.items.count() }} items</td>
+        <td class="amount-cell priority-col-1">₱{{ "{:,.2f}".format(trans.total) }}</td>
+        <td class="priority-col-2">{{ trans.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="priority-col-3">{{ trans.user.username }}</td>
+        <td class="actions-cell priority-col-1">
           <a href="{{ url_for('transactions.view_transaction', id=trans.id) }}" class="btn-icon" title="View Details">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

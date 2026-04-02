@@ -107,26 +107,30 @@
   <div class="card-header">
     <h3>Items ({{ items|length }})</h3>
   </div>
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Product</th>
-        <th>SKU</th>
-        <th>Unit Price</th>
-        <th>Quantity</th>
-        <th>Total</th>
+        <th class="priority-col-1">Product</th>
+        <th class="priority-col-3">SKU</th>
+        <th class="priority-col-2">Unit Price</th>
+        <th class="priority-col-1">Quantity</th>
+        <th class="priority-col-1">Total</th>
       </tr>
     </thead>
     <tbody>
       {% for item in items %}
       <tr>
-        <td>
+        <td class="priority-col-1">
           <a href="{{ url_for('products.view_product', id=item.product.id) }}">{{ item.product.name }}</a>
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>SKU:</strong> {{ item.product.sku }}</span>
+            <span class="meta-line"><strong>Unit Price:</strong> ₱{{ "{:,.2f}".format(item.unit_price) }}</span>
+          </div>
         </td>
-        <td>{{ item.product.sku }}</td>
-        <td>₱{{ "{:,.2f}".format(item.unit_price) }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>₱{{ "{:,.2f}".format(item.total_price) }}</td>
+        <td class="priority-col-3">{{ item.product.sku }}</td>
+        <td class="priority-col-2">₱{{ "{:,.2f}".format(item.unit_price) }}</td>
+        <td class="priority-col-1">{{ item.quantity }}</td>
+        <td class="priority-col-1">₱{{ "{:,.2f}".format(item.total_price) }}</td>
       </tr>
       {% endfor %}
     </tbody>

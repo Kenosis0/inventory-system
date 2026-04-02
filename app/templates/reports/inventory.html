@@ -70,22 +70,27 @@
   <div class="card-header">
     <h3>Inventory by Category</h3>
   </div>
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Category</th>
-        <th>Products</th>
-        <th>Total Quantity</th>
-        <th>Total Value</th>
+        <th class="priority-col-1">Category</th>
+        <th class="priority-col-2">Products</th>
+        <th class="priority-col-1">Total Quantity</th>
+        <th class="priority-col-1">Total Value</th>
       </tr>
     </thead>
     <tbody>
       {% for cat in category_stats %}
       <tr>
-        <td><strong>{{ cat[0] }}</strong></td>
-        <td>{{ cat[1] or 0 }}</td>
-        <td>{{ cat[2] or 0 }}</td>
-        <td>₱{{ "{:,.2f}".format(cat[3] or 0) }}</td>
+        <td class="priority-col-1">
+          <strong>{{ cat[0] }}</strong>
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Products:</strong> {{ cat[1] or 0 }}</span>
+          </div>
+        </td>
+        <td class="priority-col-2">{{ cat[1] or 0 }}</td>
+        <td class="priority-col-1">{{ cat[2] or 0 }}</td>
+        <td class="priority-col-1">₱{{ "{:,.2f}".format(cat[3] or 0) }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -97,34 +102,40 @@
   <div class="card-header">
     <h3>Complete Inventory List</h3>
   </div>
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>SKU</th>
-        <th>Product Name</th>
-        <th>Category</th>
-        <th>Quantity</th>
-        <th>Cost Price</th>
-        <th>Selling Price</th>
-        <th>Value</th>
-        <th>Status</th>
+        <th class="priority-col-1">SKU</th>
+        <th class="priority-col-1">Product Name</th>
+        <th class="priority-col-3">Category</th>
+        <th class="priority-col-1">Quantity</th>
+        <th class="priority-col-2">Cost Price</th>
+        <th class="priority-col-3">Selling Price</th>
+        <th class="priority-col-2">Value</th>
+        <th class="priority-col-1">Status</th>
       </tr>
     </thead>
     <tbody>
       {% for product in products %}
       <tr class="{% if product.quantity == 0 %}row-danger{% elif product.is_low_stock %}row-warning{% endif %}">
-        <td>{{ product.sku }}</td>
-        <td>
+        <td class="priority-col-1 sku-cell">{{ product.sku }}</td>
+        <td class="priority-col-1">
           <a href="{{ url_for('products.view_product', id=product.id) }}">{{ product.name }}</a>
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Category:</strong> {{ product.category.name }}</span>
+            <span class="meta-line"><strong>Cost:</strong> ₱{{ "{:,.2f}".format(product.cost_price) }}</span>
+            <span class="meta-line"><strong>Selling:</strong> ₱{{ "{:,.2f}".format(product.selling_price) }}</span>
+            <span class="meta-line"><strong>Value:</strong> ₱{{ "{:,.2f}".format(product.quantity * product.cost_price) }}</span>
+          </div>
         </td>
-        <td>{{ product.category.name }}</td>
-        <td class="{% if product.quantity == 0 %}text-danger{% elif product.is_low_stock %}text-warning{% endif %}">
+        <td class="priority-col-3">{{ product.category.name }}</td>
+        <td class="priority-col-1 {% if product.quantity == 0 %}text-danger{% elif product.is_low_stock %}text-warning{% endif %}">
           {{ product.quantity }}
         </td>
-        <td>₱{{ "{:,.2f}".format(product.cost_price) }}</td>
-        <td>₱{{ "{:,.2f}".format(product.selling_price) }}</td>
-        <td>₱{{ "{:,.2f}".format(product.quantity * product.cost_price) }}</td>
-        <td>
+        <td class="priority-col-2">₱{{ "{:,.2f}".format(product.cost_price) }}</td>
+        <td class="priority-col-3">₱{{ "{:,.2f}".format(product.selling_price) }}</td>
+        <td class="priority-col-2">₱{{ "{:,.2f}".format(product.quantity * product.cost_price) }}</td>
+        <td class="priority-col-1">
           {% if product.quantity == 0 %}
           <span class="badge badge-danger">Out of Stock</span>
           {% elif product.is_low_stock %}

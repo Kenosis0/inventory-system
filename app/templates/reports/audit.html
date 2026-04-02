@@ -49,38 +49,44 @@
 <!-- Audit Log Table -->
 <div class="table-card">
   {% if logs.items %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Date & Time</th>
-        <th>User</th>
-        <th>Action</th>
-        <th>Table</th>
-        <th>Record ID</th>
-        <th>IP Address</th>
-        <th>Details</th>
+        <th class="priority-col-1">Date & Time</th>
+        <th class="priority-col-1">User</th>
+        <th class="priority-col-2">Action</th>
+        <th class="priority-col-3">Table</th>
+        <th class="priority-col-2">Record ID</th>
+        <th class="priority-col-3">IP Address</th>
+        <th class="priority-col-1">Details</th>
       </tr>
     </thead>
     <tbody>
       {% for log in logs.items %}
       <tr>
-        <td>{{ log.created_at.strftime('%b %d, %Y %H:%M:%S') }}</td>
-        <td>
+        <td class="priority-col-1">{{ log.created_at.strftime('%b %d, %Y %H:%M:%S') }}</td>
+        <td class="priority-col-1">
           {% if log.user %}
           {{ log.user.username }}
           {% else %}
           System
           {% endif %}
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Action:</strong> {{ log.action.title() }}</span>
+            <span class="meta-line"><strong>Table:</strong> {{ log.table_name.title() }}</span>
+            <span class="meta-line"><strong>Record ID:</strong> {{ log.record_id or '-' }}</span>
+            <span class="meta-line"><strong>IP:</strong> {{ log.ip_address or '-' }}</span>
+          </div>
         </td>
-        <td>
+        <td class="priority-col-2">
           <span class="badge badge-{{ 'success' if log.action == 'create' else 'warning' if log.action == 'update' else 'danger' if log.action == 'delete' else 'info' }}">
             {{ log.action.title() }}
           </span>
         </td>
-        <td>{{ log.table_name.title() }}</td>
-        <td>{{ log.record_id or '-' }}</td>
-        <td>{{ log.ip_address or '-' }}</td>
-        <td>
+        <td class="priority-col-3">{{ log.table_name.title() }}</td>
+        <td class="priority-col-2">{{ log.record_id or '-' }}</td>
+        <td class="priority-col-3">{{ log.ip_address or '-' }}</td>
+        <td class="priority-col-1">
           {% if log.old_values or log.new_values %}
           <button type="button" class="btn btn-sm btn-outline" 
                   onclick="showDetails('{{ log.old_values | e }}', '{{ log.new_values | e }}')">

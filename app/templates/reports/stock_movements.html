@@ -44,41 +44,50 @@
 <!-- Movements Table -->
 <div class="table-card">
   {% if movements.items %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Date & Time</th>
-        <th>Product</th>
-        <th>Type</th>
-        <th>Change</th>
-        <th>Before</th>
-        <th>After</th>
-        <th>Reference</th>
-        <th>User</th>
-        <th>Notes</th>
+        <th class="priority-col-1">Date & Time</th>
+        <th class="priority-col-1">Product</th>
+        <th class="priority-col-2">Type</th>
+        <th class="priority-col-1">Change</th>
+        <th class="priority-col-3">Before</th>
+        <th class="priority-col-2">After</th>
+        <th class="priority-col-2">Reference</th>
+        <th class="priority-col-3">User</th>
+        <th class="priority-col-3">Notes</th>
       </tr>
     </thead>
     <tbody>
       {% for m in movements.items %}
       <tr>
-        <td>{{ m.created_at.strftime('%b %d, %Y %H:%M') }}</td>
-        <td>
+        <td class="priority-col-1">{{ m.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="priority-col-1">
           <a href="{{ url_for('products.view_product', id=m.product.id) }}">{{ m.product.name }}</a>
           <br><small>{{ m.product.sku }}</small>
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Type:</strong> {{ m.movement_type.title() }}</span>
+            <span class="meta-line"><strong>Ref:</strong> {{ m.reference or '-' }}</span>
+            <span class="meta-line"><strong>Before/After:</strong> {{ m.quantity_before }} / {{ m.quantity_after }}</span>
+            <span class="meta-line"><strong>User:</strong> {{ m.user.username }}</span>
+            {% if m.notes %}
+            <span class="meta-line"><strong>Notes:</strong> {{ m.notes }}</span>
+            {% endif %}
+          </div>
         </td>
-        <td>
+        <td class="priority-col-2">
           <span class="badge badge-{{ 'success' if m.movement_type == 'purchase' else 'info' if m.movement_type == 'adjustment' else 'warning' }}">
             {{ m.movement_type.title() }}
           </span>
         </td>
-        <td class="{% if m.quantity_change > 0 %}text-success{% else %}text-danger{% endif %}">
+        <td class="priority-col-1 {% if m.quantity_change > 0 %}text-success{% else %}text-danger{% endif %}">
           <strong>{{ '+' if m.quantity_change > 0 else '' }}{{ m.quantity_change }}</strong>
         </td>
-        <td>{{ m.quantity_before }}</td>
-        <td>{{ m.quantity_after }}</td>
-        <td>{{ m.reference or '-' }}</td>
-        <td>{{ m.user.username }}</td>
-        <td>{{ m.notes or '-' }}</td>
+        <td class="priority-col-3">{{ m.quantity_before }}</td>
+        <td class="priority-col-2">{{ m.quantity_after }}</td>
+        <td class="priority-col-2">{{ m.reference or '-' }}</td>
+        <td class="priority-col-3">{{ m.user.username }}</td>
+        <td class="priority-col-3">{{ m.notes or '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>

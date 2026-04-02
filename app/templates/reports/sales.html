@@ -122,20 +122,25 @@ function setDateRange(range) {
   <div class="card-header">
     <h3>Daily Sales Breakdown</h3>
   </div>
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Transactions</th>
-        <th>Total Sales</th>
+        <th class="priority-col-1">Date</th>
+        <th class="priority-col-2">Transactions</th>
+        <th class="priority-col-1">Total Sales</th>
       </tr>
     </thead>
     <tbody>
       {% for day in daily_sales %}
       <tr>
-        <td>{{ day.date }}</td>
-        <td>{{ day.count }}</td>
-        <td>₱{{ "{:,.2f}".format(day.total or 0) }}</td>
+        <td class="priority-col-1">
+          {{ day.date }}
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Transactions:</strong> {{ day.count }}</span>
+          </div>
+        </td>
+        <td class="priority-col-2">{{ day.count }}</td>
+        <td class="priority-col-1">₱{{ "{:,.2f}".format(day.total or 0) }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -149,28 +154,35 @@ function setDateRange(range) {
     <h3>Sales Transactions</h3>
   </div>
   {% if sales %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Reference</th>
-        <th>Customer</th>
-        <th>Items</th>
-        <th>Total</th>
-        <th>Date</th>
-        <th>Processed By</th>
+        <th class="priority-col-1">Reference</th>
+        <th class="priority-col-1">Customer</th>
+        <th class="priority-col-3">Items</th>
+        <th class="priority-col-1">Total</th>
+        <th class="priority-col-2">Date</th>
+        <th class="priority-col-3">Processed By</th>
       </tr>
     </thead>
     <tbody>
       {% for sale in sales %}
       <tr>
-        <td>
+        <td class="priority-col-1">
           <a href="{{ url_for('transactions.view_transaction', id=sale.id) }}">{{ sale.reference_number }}</a>
         </td>
-        <td>{{ sale.customer_name or '-' }}</td>
-        <td>{{ sale.items.count() }}</td>
-        <td>₱{{ "{:,.2f}".format(sale.total) }}</td>
-        <td>{{ sale.created_at.strftime('%b %d, %Y %H:%M') }}</td>
-        <td>{{ sale.user.username }}</td>
+        <td class="priority-col-1">
+          {{ sale.customer_name or '-' }}
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Date:</strong> {{ sale.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+            <span class="meta-line"><strong>Items:</strong> {{ sale.items.count() }}</span>
+            <span class="meta-line"><strong>Processed By:</strong> {{ sale.user.username }}</span>
+          </div>
+        </td>
+        <td class="priority-col-3">{{ sale.items.count() }}</td>
+        <td class="priority-col-1">₱{{ "{:,.2f}".format(sale.total) }}</td>
+        <td class="priority-col-2">{{ sale.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="priority-col-3">{{ sale.user.username }}</td>
       </tr>
       {% endfor %}
     </tbody>

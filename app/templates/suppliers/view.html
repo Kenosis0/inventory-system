@@ -101,7 +101,7 @@
   <div class="card-header">
     <h3>Recent Purchase Transactions</h3>
   </div>
-  <table class="data-table">
+  <table class="data-table desktop-only">
     <thead>
       <tr>
         <th>Reference</th>
@@ -134,6 +134,34 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <div class="mobile-card-list mobile-only supplier-transaction-cards">
+    {% for transaction in recent_transactions %}
+    <article class="mobile-card">
+      <div class="mobile-card-header">
+        <a href="{{ url_for('transactions.view_transaction', id=transaction.id) }}" class="mobile-card-title">
+          {{ transaction.reference_number }}
+        </a>
+        <span class="badge badge-info">{{ transaction.items.count() }} item(s)</span>
+      </div>
+
+      <div class="mobile-kv-list">
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Date</span>
+          <span class="mobile-kv-value">{{ transaction.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+        </div>
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Total</span>
+          <span class="mobile-kv-value">${{ "%.2f"|format(transaction.total) }}</span>
+        </div>
+      </div>
+
+      <div class="mobile-card-actions">
+        <a href="{{ url_for('transactions.view_transaction', id=transaction.id) }}" class="btn btn-outline btn-sm">View</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
 </div>
 {% endif %}
 

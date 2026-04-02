@@ -65,38 +65,51 @@
     <span class="badge badge-info">Closing Balance: ₱{{ "{:,.2f}".format(closing_balance) }}</span>
   </div>
   {% if entries %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Reference</th>
-        <th>Amount</th>
-        <th>Running Balance</th>
-        <th>Notes</th>
+        <th class="priority-col-1">Date</th>
+        <th class="priority-col-1">Type</th>
+        <th class="priority-col-3">Reference</th>
+        <th class="priority-col-1">Amount</th>
+        <th class="priority-col-2">Running Balance</th>
+        <th class="priority-col-3">Notes</th>
       </tr>
     </thead>
     <tbody>
       {% for entry in entries %}
       <tr>
-        <td>{{ entry.created_at.strftime('%b %d, %Y %H:%M') }}</td>
-        <td>
+        <td class="priority-col-1">{{ entry.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="priority-col-1">
           <span class="badge badge-{{ 'success' if entry.amount > 0 else 'danger' if entry.amount < 0 else 'secondary' }}">
             {{ entry.entry_type.replace('_', ' ').title() }}
           </span>
         </td>
-        <td>
+        <td class="priority-col-3">
           {% if entry.transaction %}
             <a href="{{ url_for('transactions.view_transaction', id=entry.transaction.id) }}">{{ entry.transaction.reference_number }}</a>
           {% else %}
             -
           {% endif %}
         </td>
-        <td class="{{ 'text-success' if entry.amount > 0 else 'text-danger' if entry.amount < 0 else '' }}">
+        <td class="priority-col-1 {{ 'text-success' if entry.amount > 0 else 'text-danger' if entry.amount < 0 else '' }}">
           {{ '+' if entry.amount > 0 else '' }}₱{{ "{:,.2f}".format(entry.amount) }}
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Balance:</strong> ₱{{ "{:,.2f}".format(entry.running_balance) }}</span>
+            <span class="meta-line"><strong>Ref:</strong>
+              {% if entry.transaction %}
+              {{ entry.transaction.reference_number }}
+              {% else %}
+              -
+              {% endif %}
+            </span>
+            {% if entry.notes %}
+            <span class="meta-line"><strong>Notes:</strong> {{ entry.notes }}</span>
+            {% endif %}
+          </div>
         </td>
-        <td><strong>₱{{ "{:,.2f}".format(entry.running_balance) }}</strong></td>
-        <td>{{ entry.notes or '-' }}</td>
+        <td class="priority-col-2"><strong>₱{{ "{:,.2f}".format(entry.running_balance) }}</strong></td>
+        <td class="priority-col-3">{{ entry.notes or '-' }}</td>
       </tr>
       {% endfor %}
     </tbody>

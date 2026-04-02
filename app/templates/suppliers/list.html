@@ -30,7 +30,7 @@
   <a href="{{ url_for('suppliers.add_supplier') }}" class="btn btn-primary">Add Supplier</a>
 </div>
 {% else %}
-<div class="table-card">
+<div class="table-card desktop-only">
   <table class="data-table">
     <thead>
       <tr>
@@ -84,6 +84,54 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<div class="mobile-card-list mobile-only">
+  {% for supplier in suppliers %}
+  {% set transaction_count = supplier.transactions.count() %}
+  <article class="mobile-card">
+    <div class="mobile-card-header">
+      <a href="{{ url_for('suppliers.view_supplier', id=supplier.id) }}" class="mobile-card-title">
+        {{ supplier.name }}
+      </a>
+      <span class="badge badge-info">{{ transaction_count }} txns</span>
+    </div>
+
+    <div class="mobile-kv-list">
+      <div class="mobile-kv">
+        <span class="mobile-kv-label">Contact</span>
+        <span class="mobile-kv-value">{{ supplier.contact_person or '-' }}</span>
+      </div>
+    </div>
+
+    <details class="mobile-card-details">
+      <summary>More details</summary>
+      <div class="mobile-kv-list">
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Email</span>
+          <span class="mobile-kv-value wrap">{{ supplier.email or '-' }}</span>
+        </div>
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Phone</span>
+          <span class="mobile-kv-value">{{ supplier.phone or '-' }}</span>
+        </div>
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Transactions</span>
+          <span class="mobile-kv-value">{{ transaction_count }}</span>
+        </div>
+      </div>
+    </details>
+
+    <div class="mobile-card-actions">
+      <a href="{{ url_for('suppliers.view_supplier', id=supplier.id) }}" class="btn btn-outline btn-sm">View</a>
+      <a href="{{ url_for('suppliers.edit_supplier', id=supplier.id) }}" class="btn btn-outline btn-sm">Edit</a>
+      <form method="POST" action="{{ url_for('suppliers.delete_supplier', id=supplier.id) }}"
+            onsubmit="return confirm('Are you sure you want to deactivate this supplier?')">
+        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+      </form>
+    </div>
+  </article>
+  {% endfor %}
 </div>
 {% endif %}
 {% endblock %}

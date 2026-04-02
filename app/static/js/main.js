@@ -53,53 +53,68 @@ function initSubmenu() {
 
 // ===== MOBILE NAVIGATION =====
 function initMobileNav() {
-  // Create mobile menu toggle button if needed
-  if (window.innerWidth <= 1024) {
-    const sidebar = document.querySelector('.sidebar');
-    const mainContent = document.querySelector('.main-content');
-    
-    if (sidebar && mainContent) {
-      // Create toggle button
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = 'mobile-nav-toggle';
-      toggleBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      `;
-      toggleBtn.style.cssText = `
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        z-index: 101;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 10px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      `;
-      toggleBtn.querySelector('svg').style.cssText = 'width: 24px; height: 24px;';
-      
-      document.body.appendChild(toggleBtn);
-      
-      // Toggle sidebar
-      toggleBtn.addEventListener('click', function() {
-        sidebar.classList.toggle('open');
-      });
-      
-      // Close sidebar when clicking outside
-      document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-          sidebar.classList.remove('open');
-        }
-      });
-    }
+  const sidebar = document.querySelector('.sidebar');
+  const scrim = document.querySelector('.sidebar-scrim');
+  const menuTriggers = document.querySelectorAll('.mobile-menu-trigger');
+
+  if (!sidebar || menuTriggers.length === 0) {
+    return;
   }
+
+  const setExpandedState = (isExpanded) => {
+    menuTriggers.forEach((trigger) => {
+      trigger.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    });
+  };
+
+  const closeSidebar = () => {
+    sidebar.classList.remove('open');
+    document.body.classList.remove('nav-open');
+    setExpandedState(false);
+  };
+
+  const toggleSidebar = () => {
+    if (window.innerWidth > 1024) {
+      return;
+    }
+
+    const willOpen = !sidebar.classList.contains('open');
+    sidebar.classList.toggle('open', willOpen);
+    document.body.classList.toggle('nav-open', willOpen);
+    setExpandedState(willOpen);
+  };
+
+  menuTriggers.forEach((trigger) => {
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSidebar();
+    });
+  });
+
+  if (scrim) {
+    scrim.addEventListener('click', closeSidebar);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeSidebar();
+    }
+  });
+
+  sidebar.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 1024 && link.getAttribute('href') !== '#') {
+        closeSidebar();
+      }
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024) {
+      closeSidebar();
+    }
+  });
 }
 
 // ===== UTILITY FUNCTIONS =====

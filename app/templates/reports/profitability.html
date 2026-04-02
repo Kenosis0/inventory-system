@@ -74,28 +74,33 @@
     <h3>Sales Profitability Breakdown</h3>
   </div>
   {% if rows %}
-  <table class="data-table">
+  <table class="data-table priority-table">
     <thead>
       <tr>
-        <th>Reference</th>
-        <th>Date</th>
-        <th>Revenue</th>
-        <th>COGS</th>
-        <th>Gross Profit</th>
-        <th>Margin %</th>
+        <th class="priority-col-1">Reference</th>
+        <th class="priority-col-2">Date</th>
+        <th class="priority-col-2">Revenue</th>
+        <th class="priority-col-3">COGS</th>
+        <th class="priority-col-1">Gross Profit</th>
+        <th class="priority-col-1">Margin %</th>
       </tr>
     </thead>
     <tbody>
       {% for row in rows %}
       <tr>
-        <td>
+        <td class="priority-col-1">
           <a href="{{ url_for('transactions.view_transaction', id=row.transaction.id) }}">{{ row.transaction.reference_number }}</a>
+          <div class="mobile-inline-meta">
+            <span class="meta-line"><strong>Date:</strong> {{ row.transaction.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+            <span class="meta-line"><strong>Revenue:</strong> ₱{{ "{:,.2f}".format(row.revenue) }}</span>
+            <span class="meta-line"><strong>COGS:</strong> ₱{{ "{:,.2f}".format(row.cogs) }}</span>
+          </div>
         </td>
-        <td>{{ row.transaction.created_at.strftime('%b %d, %Y %H:%M') }}</td>
-        <td>₱{{ "{:,.2f}".format(row.revenue) }}</td>
-        <td>₱{{ "{:,.2f}".format(row.cogs) }}</td>
-        <td class="{{ 'text-success' if row.gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(row.gross_profit) }}</td>
-        <td>{{ "{:.2f}".format(row.margin_percent) }}%</td>
+        <td class="priority-col-2">{{ row.transaction.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+        <td class="priority-col-2">₱{{ "{:,.2f}".format(row.revenue) }}</td>
+        <td class="priority-col-3">₱{{ "{:,.2f}".format(row.cogs) }}</td>
+        <td class="priority-col-1 {{ 'text-success' if row.gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(row.gross_profit) }}</td>
+        <td class="priority-col-1">{{ "{:.2f}".format(row.margin_percent) }}%</td>
       </tr>
       {% endfor %}
     </tbody>

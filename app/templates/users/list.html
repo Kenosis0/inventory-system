@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<div class="table-card">
+<div class="table-card desktop-only">
   <table class="data-table">
     <thead>
       <tr>
@@ -88,5 +88,62 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+<div class="mobile-card-list mobile-only">
+  {% for user in users %}
+  <article class="mobile-card {% if not user.is_active %}row-muted{% endif %}">
+    <div class="mobile-card-header">
+      <div class="mobile-user-title">
+        <div class="user-avatar small">{{ user.username[0].upper() }}</div>
+        <div>
+          <span class="mobile-card-title">{{ user.username }}</span>
+          <div class="mobile-user-badges">
+            <span class="badge badge-{{ 'primary' if user.role == 'admin' else 'secondary' }}">{{ user.role.title() }}</span>
+            {% if user.id == current_user.id %}
+            <span class="badge badge-info">You</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% if user.is_active %}
+      <span class="badge badge-success">Active</span>
+      {% else %}
+      <span class="badge badge-danger">Inactive</span>
+      {% endif %}
+    </div>
+
+    <details class="mobile-card-details">
+      <summary>More details</summary>
+      <div class="mobile-kv-list">
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Email</span>
+          <span class="mobile-kv-value wrap">{{ user.email }}</span>
+        </div>
+        <div class="mobile-kv">
+          <span class="mobile-kv-label">Last Login</span>
+          <span class="mobile-kv-value">
+            {% if user.last_login %}
+            {{ user.last_login.strftime('%b %d, %Y %H:%M') }}
+            {% else %}
+            Never
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </details>
+
+    <div class="mobile-card-actions">
+      <a href="{{ url_for('users.edit_user', id=user.id) }}" class="btn btn-outline btn-sm">Edit</a>
+      {% if user.id != current_user.id %}
+      <form method="POST" action="{{ url_for('users.delete_user', id=user.id) }}"
+            onsubmit="return confirm('Are you sure you want to deactivate this user?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+  {% endfor %}
 </div>
 {% endblock %}
