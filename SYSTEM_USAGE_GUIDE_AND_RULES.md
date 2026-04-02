@@ -312,7 +312,7 @@ Use this sequence before maintenance tasks (normalization script, resets, heavy 
 4. Start app and run smoke checks.
 5. If results are wrong, stop app and restore immediately.
 
-## 12. Demonstration SOP for Reviewers or Professor
+## 12. Demonstration SOP
 1. Login and show role difference.
 2. Show Dashboard summary and charts.
 3. Encode one purchase transaction.
