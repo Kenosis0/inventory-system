@@ -116,6 +116,32 @@ function setDateRange(range) {
   </div>
 </div>
 
+<div class="analytics-grid">
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Revenue Trend</h3>
+      <span class="badge badge-secondary">Daily</span>
+    </div>
+    <div class="analytics-card-body">
+      <div class="chart-canvas-wrap">
+        <canvas id="salesRevenueTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Transaction Volume</h3>
+      <span class="badge badge-secondary">Count</span>
+    </div>
+    <div class="analytics-card-body">
+      <div class="chart-canvas-wrap">
+        <canvas id="salesTransactionVolumeChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Daily Breakdown -->
 {% if daily_sales %}
 <div class="table-card">
@@ -193,4 +219,96 @@ function setDateRange(range) {
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function initSalesCharts() {
+  if (!window.Chart) {
+    return;
+  }
+
+  const labels = {{ sales_chart_labels | tojson }};
+  const totals = {{ sales_chart_totals | tojson }};
+  const counts = {{ sales_chart_counts | tojson }};
+
+  const revenueCanvas = document.getElementById('salesRevenueTrendChart');
+  if (revenueCanvas) {
+    new Chart(revenueCanvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Revenue',
+          data: totals,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          borderWidth: 2,
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'Revenue: ₱' + Number(context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₱' + Number(value).toLocaleString('en-PH');
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const volumeCanvas = document.getElementById('salesTransactionVolumeChart');
+  if (volumeCanvas) {
+    new Chart(volumeCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Transactions',
+          data: counts,
+          backgroundColor: '#3b82f6',
+          borderRadius: 6,
+          maxBarThickness: 28
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}

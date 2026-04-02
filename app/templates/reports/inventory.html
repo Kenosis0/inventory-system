@@ -65,6 +65,24 @@
   </div>
 </div>
 
+<div class="analytics-grid">
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Inventory Value by Category</h3>
+      <span class="badge badge-secondary">Top 8</span>
+    </div>
+    <div class="analytics-card-body">
+      {% if inventory_chart_labels %}
+      <div class="chart-canvas-wrap">
+        <canvas id="inventoryCategoryValueChart"></canvas>
+      </div>
+      {% else %}
+      <p class="empty-message">No category value data available yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <!-- Category Breakdown -->
 <div class="table-card">
   <div class="card-header">
@@ -149,4 +167,62 @@
     </tbody>
   </table>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function initInventoryCharts() {
+  if (!window.Chart) {
+    return;
+  }
+
+  const labels = {{ inventory_chart_labels | tojson }};
+  const values = {{ inventory_chart_values | tojson }};
+
+  const chartCanvas = document.getElementById('inventoryCategoryValueChart');
+  if (!chartCanvas || labels.length === 0) {
+    return;
+  }
+
+  new Chart(chartCanvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Cost Value',
+        data: values,
+        backgroundColor: '#7f1416',
+        borderRadius: 8,
+        maxBarThickness: 28
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return 'Value: ₱' + Number(context.parsed.x || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₱' + Number(value).toLocaleString('en-PH');
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}

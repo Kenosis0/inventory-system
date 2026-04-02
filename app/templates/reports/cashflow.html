@@ -59,6 +59,24 @@
   </div>
 </div>
 
+<div class="analytics-grid">
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Cashflow Trend</h3>
+      <span class="badge badge-secondary">Daily</span>
+    </div>
+    <div class="analytics-card-body">
+      {% if cashflow_chart_labels %}
+      <div class="chart-canvas-wrap">
+        <canvas id="cashflowTrendChart"></canvas>
+      </div>
+      {% else %}
+      <p class="empty-message">No cashflow trend data available for this range.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <div class="table-card">
   <div class="card-header">
     <h3>Cash Ledger Entries</h3>
@@ -120,4 +138,87 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function initCashflowCharts() {
+  if (!window.Chart) {
+    return;
+  }
+
+  const labels = {{ cashflow_chart_labels | tojson }};
+  const netValues = {{ cashflow_chart_net | tojson }};
+  const balanceValues = {{ cashflow_chart_balance | tojson }};
+
+  const chartCanvas = document.getElementById('cashflowTrendChart');
+  if (!chartCanvas || labels.length === 0) {
+    return;
+  }
+
+  new Chart(chartCanvas, {
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Net Movement',
+          data: netValues,
+          backgroundColor: netValues.map((value) => value >= 0 ? 'rgba(16, 185, 129, 0.75)' : 'rgba(239, 68, 68, 0.75)'),
+          borderRadius: 6,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'Running Balance',
+          data: balanceValues,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 2,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ₱' + Number(context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          position: 'left',
+          ticks: {
+            callback: function(value) {
+              return '₱' + Number(value).toLocaleString('en-PH');
+            }
+          }
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          grid: {
+            drawOnChartArea: false
+          },
+          ticks: {
+            callback: function(value) {
+              return '₱' + Number(value).toLocaleString('en-PH');
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}

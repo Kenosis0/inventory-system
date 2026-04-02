@@ -69,6 +69,24 @@
   </div>
 </div>
 
+<div class="analytics-grid">
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Profitability Trend</h3>
+      <span class="badge badge-secondary">Daily</span>
+    </div>
+    <div class="analytics-card-body">
+      {% if profitability_chart_labels %}
+      <div class="chart-canvas-wrap">
+        <canvas id="profitabilityTrendChart"></canvas>
+      </div>
+      {% else %}
+      <p class="empty-message">No profitability trend data available for this range.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 <div class="table-card">
   <div class="card-header">
     <h3>Sales Profitability Breakdown</h3>
@@ -111,4 +129,84 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function initProfitabilityCharts() {
+  if (!window.Chart) {
+    return;
+  }
+
+  const labels = {{ profitability_chart_labels | tojson }};
+  const revenueValues = {{ profitability_chart_revenue | tojson }};
+  const cogsValues = {{ profitability_chart_cogs | tojson }};
+  const profitValues = {{ profitability_chart_profit | tojson }};
+
+  const chartCanvas = document.getElementById('profitabilityTrendChart');
+  if (!chartCanvas || labels.length === 0) {
+    return;
+  }
+
+  new Chart(chartCanvas, {
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Revenue',
+          data: revenueValues,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.12)',
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 2
+        },
+        {
+          type: 'line',
+          label: 'COGS',
+          data: cogsValues,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          borderWidth: 2,
+          tension: 0.3,
+          pointRadius: 2
+        },
+        {
+          type: 'bar',
+          label: 'Gross Profit',
+          data: profitValues,
+          backgroundColor: profitValues.map((value) => value >= 0 ? 'rgba(59, 130, 246, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+          borderRadius: 6,
+          maxBarThickness: 28
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ₱' + Number(context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '₱' + Number(value).toLocaleString('en-PH');
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}

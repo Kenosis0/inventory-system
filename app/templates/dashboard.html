@@ -9,7 +9,7 @@
 </div>
 
 <!-- Stats Cards -->
-<div class="stats-grid">
+<div class="stats-grid dashboard-kpi-grid dashboard-kpi-grid-primary">
   <div class="stat-card">
     <div class="stat-icon blue">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,20 +51,6 @@
   </div>
   
   <div class="stat-card">
-    <div class="stat-icon purple">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <span class="stat-value">₱{{ "{:,.2f}".format(inventory_value) }}</span>
-      <span class="stat-label">Inventory Value</span>
-    </div>
-  </div>
-</div>
-
-<div class="stats-grid" style="margin-top: 16px;">
-  <div class="stat-card">
     <div class="stat-icon blue">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -76,45 +62,67 @@
       <span class="stat-label">Available Cash</span>
     </div>
   </div>
-
-  <div class="stat-card">
-    <div class="stat-icon gray">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <span class="stat-value">₱{{ "{:,.2f}".format(today_cogs) }}</span>
-      <span class="stat-label">Today's COGS</span>
-    </div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-icon {{ 'green' if today_gross_profit >= 0 else 'orange' }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-        <polyline points="17 6 23 6 23 12"></polyline>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <span class="stat-value {{ 'text-success' if today_gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(today_gross_profit) }}</span>
-      <span class="stat-label">Today's Gross Profit</span>
-    </div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-icon purple">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 3v18h18"></path>
-        <path d="M7 16l4-4 3 3 5-6"></path>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <span class="stat-value">{{ "{:.2f}".format(today_margin_percent) }}%</span>
-      <span class="stat-label">Today's Gross Margin</span>
-    </div>
-  </div>
 </div>
+
+<details class="kpi-secondary-section" id="secondaryKpis" open>
+  <summary>
+    <span>Financial Snapshot</span>
+    <span class="kpi-secondary-hint">Tap to expand</span>
+  </summary>
+  <div class="kpi-secondary-content">
+    <div class="stats-grid dashboard-kpi-grid stats-grid-secondary">
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">₱{{ "{:,.2f}".format(inventory_value) }}</span>
+          <span class="stat-label">Inventory Value</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon gray">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">₱{{ "{:,.2f}".format(today_cogs) }}</span>
+          <span class="stat-label">Today's COGS</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon {{ 'green' if today_gross_profit >= 0 else 'orange' }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value {{ 'text-success' if today_gross_profit >= 0 else 'text-danger' }}">₱{{ "{:,.2f}".format(today_gross_profit) }}</span>
+          <span class="stat-label">Today's Gross Profit</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18"></path>
+            <path d="M7 16l4-4 3 3 5-6"></path>
+          </svg>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ "{:.2f}".format(today_margin_percent) }}%</span>
+          <span class="stat-label">Today's Gross Margin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</details>
 
 <!-- Quick Actions -->
 <div class="quick-actions">
@@ -152,6 +160,36 @@
       </svg>
       View Low Stock
     </a>
+  </div>
+</div>
+
+<div class="analytics-grid">
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Sales Trend (Last 7 Days)</h3>
+      <span class="badge badge-secondary">Daily</span>
+    </div>
+    <div class="analytics-card-body">
+      <div class="chart-canvas-wrap">
+        <canvas id="dashboardSalesTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="analytics-card">
+    <div class="analytics-card-header">
+      <h3>Products by Category</h3>
+      <span class="badge badge-secondary">Top 6</span>
+    </div>
+    <div class="analytics-card-body">
+      {% if category_chart_labels %}
+      <div class="chart-canvas-wrap">
+        <canvas id="dashboardCategoryMixChart"></canvas>
+      </div>
+      {% else %}
+      <p class="empty-message">No category data available yet.</p>
+      {% endif %}
+    </div>
   </div>
 </div>
 
@@ -264,4 +302,125 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function initDashboardKpiToggle() {
+  const secondaryKpis = document.getElementById('secondaryKpis');
+  if (!secondaryKpis) {
+    return;
+  }
+
+  const mobileMedia = window.matchMedia('(max-width: 768px)');
+
+  const syncKpiState = () => {
+    if (mobileMedia.matches) {
+      secondaryKpis.removeAttribute('open');
+    } else {
+      secondaryKpis.setAttribute('open', '');
+    }
+  };
+
+  syncKpiState();
+
+  if (typeof mobileMedia.addEventListener === 'function') {
+    mobileMedia.addEventListener('change', syncKpiState);
+  } else if (typeof mobileMedia.addListener === 'function') {
+    mobileMedia.addListener(syncKpiState);
+  }
+})();
+
+(function initDashboardCharts() {
+  if (!window.Chart) {
+    return;
+  }
+
+  const salesLabels = {{ dashboard_sales_labels | tojson }};
+  const salesValues = {{ dashboard_sales_values | tojson }};
+  const categoryLabels = {{ category_chart_labels | tojson }};
+  const categoryValues = {{ category_chart_values | tojson }};
+
+  const salesCanvas = document.getElementById('dashboardSalesTrendChart');
+  if (salesCanvas) {
+    new Chart(salesCanvas, {
+      type: 'line',
+      data: {
+        labels: salesLabels,
+        datasets: [{
+          label: 'Sales',
+          data: salesValues,
+          borderColor: '#7f1416',
+          backgroundColor: 'rgba(127, 20, 22, 0.12)',
+          tension: 0.3,
+          fill: true,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'Sales: ₱' + Number(context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₱' + Number(value).toLocaleString('en-PH');
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const categoryCanvas = document.getElementById('dashboardCategoryMixChart');
+  if (categoryCanvas && categoryLabels.length > 0) {
+    new Chart(categoryCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: categoryLabels,
+        datasets: [{
+          data: categoryValues,
+          backgroundColor: [
+            '#7f1416',
+            '#d4a574',
+            '#3b82f6',
+            '#10b981',
+            '#f59e0b',
+            '#6366f1'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10
+            }
+          }
+        }
+      }
+    });
+  }
+})();
+</script>
 {% endblock %}

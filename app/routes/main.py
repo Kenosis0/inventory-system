@@ -2,7 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from app.models import db, Product, Transaction, TransactionItem, Category, User, CashLedger
 from sqlalchemy import func
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 main_bp = Blueprint('main', __name__)
 
@@ -39,6 +39,29 @@ def dashboard():
     )
     today_gross_profit = today_sales_total - today_cogs
     today_margin_percent = (today_gross_profit / today_sales_total * 100) if today_sales_total > 0 else 0
+
+    # Sales trend for the last 7 days (including days with zero sales)
+    sales_trend_start = today - timedelta(days=6)
+    daily_sales_rows = db.session.query(
+        func.date(Transaction.created_at).label('day'),
+        func.sum(Transaction.total).label('total')
+    ).filter(
+        Transaction.transaction_type == 'sale',
+        func.date(Transaction.created_at) >= sales_trend_start,
+        func.date(Transaction.created_at) <= today
+    ).group_by(func.date(Transaction.created_at)).all()
+
+    daily_sales_map = {}
+    for row in daily_sales_rows:
+        row_key = row.day.isoformat() if hasattr(row.day, 'isoformat') else str(row.day)
+        daily_sales_map[row_key] = float(row.total or 0)
+
+    dashboard_sales_labels = []
+    dashboard_sales_values = []
+    for day_index in range(7):
+        day_value = sales_trend_start + timedelta(days=day_index)
+        dashboard_sales_labels.append(day_value.strftime('%b %d'))
+        dashboard_sales_values.append(round(daily_sales_map.get(day_value.isoformat(), 0.0), 2))
     
     # Recent transactions (last 5)
     recent_transactions = Transaction.query.order_by(
@@ -58,6 +81,18 @@ def dashboard():
         Category.name,
         func.count(Product.id)
     ).outerjoin(Product).group_by(Category.id).all()
+
+    category_chart_pairs = sorted(
+        [
+            (name, int(count or 0))
+            for name, count in category_stats
+            if (count or 0) > 0
+        ],
+        key=lambda pair: pair[1],
+        reverse=True
+    )[:6]
+    category_chart_labels = [pair[0] for pair in category_chart_pairs]
+    category_chart_values = [pair[1] for pair in category_chart_pairs]
     
     return render_template('dashboard.html',
         total_products=total_products,
@@ -72,5 +107,9 @@ def dashboard():
         recent_transactions=recent_transactions,
         inventory_value=inventory_value,
         available_cash=available_cash,
-        category_stats=category_stats
+        category_stats=category_stats,
+        dashboard_sales_labels=dashboard_sales_labels,
+        dashboard_sales_values=dashboard_sales_values,
+        category_chart_labels=category_chart_labels,
+        category_chart_values=category_chart_values
     )

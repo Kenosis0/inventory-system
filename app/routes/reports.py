@@ -73,12 +73,37 @@ def sales_report():
         Transaction.created_at >= start_date,
         Transaction.created_at <= end_date
     ).group_by(func.date(Transaction.created_at)).all()
+
+    daily_sales_map = {}
+    for row in daily_sales:
+        row_key = row.date.isoformat() if hasattr(row.date, 'isoformat') else str(row.date)
+        daily_sales_map[row_key] = {
+            'total': float(row.total or 0),
+            'count': int(row.count or 0),
+        }
+
+    sales_chart_labels = []
+    sales_chart_totals = []
+    sales_chart_counts = []
+    current_day = start_date.date()
+    end_day = end_date.date()
+
+    while current_day <= end_day:
+        day_key = current_day.isoformat()
+        day_data = daily_sales_map.get(day_key, {'total': 0.0, 'count': 0})
+        sales_chart_labels.append(current_day.strftime('%b %d'))
+        sales_chart_totals.append(round(day_data['total'], 2))
+        sales_chart_counts.append(day_data['count'])
+        current_day += timedelta(days=1)
     
     return render_template('reports/sales.html',
         sales=sales,
         total_sales=total_sales,
         total_transactions=total_transactions,
         daily_sales=daily_sales,
+        sales_chart_labels=sales_chart_labels,
+        sales_chart_totals=sales_chart_totals,
+        sales_chart_counts=sales_chart_counts,
         date_from=date_from,
         date_to=date_to
     )
@@ -109,6 +134,18 @@ def inventory_report():
         Product.category_id == Category.id,
         Product.is_active == True
     )).group_by(Category.id).all()
+
+    inventory_chart_pairs = sorted(
+        [
+            (name, float(value or 0))
+            for name, _count, _quantity, value in category_stats
+            if float(value or 0) > 0
+        ],
+        key=lambda pair: pair[1],
+        reverse=True
+    )[:8]
+    inventory_chart_labels = [pair[0] for pair in inventory_chart_pairs]
+    inventory_chart_values = [round(pair[1], 2) for pair in inventory_chart_pairs]
     
     return render_template('reports/inventory.html',
         products=products,
@@ -117,7 +154,9 @@ def inventory_report():
         total_retail_value=total_retail_value,
         low_stock_count=len(low_stock),
         out_of_stock_count=len(out_of_stock),
-        category_stats=category_stats
+        category_stats=category_stats,
+        inventory_chart_labels=inventory_chart_labels,
+        inventory_chart_values=inventory_chart_values
     )
 
 @reports_bp.route('/finance/setup', methods=['GET', 'POST'])
@@ -183,6 +222,23 @@ def cashflow_report():
     latest_entry = CashLedger.query.order_by(CashLedger.id.desc()).first()
     current_balance = latest_entry.running_balance if latest_entry else 0.0
 
+    cashflow_daily = {}
+    for entry in entries:
+        day_key = entry.created_at.date().isoformat()
+        if day_key not in cashflow_daily:
+            cashflow_daily[day_key] = {
+                'label': entry.created_at.strftime('%b %d'),
+                'net': 0.0,
+                'running_balance': float(entry.running_balance),
+            }
+
+        cashflow_daily[day_key]['net'] += float(entry.amount)
+        cashflow_daily[day_key]['running_balance'] = float(entry.running_balance)
+
+    cashflow_chart_labels = [day_data['label'] for day_data in cashflow_daily.values()]
+    cashflow_chart_net = [round(day_data['net'], 2) for day_data in cashflow_daily.values()]
+    cashflow_chart_balance = [round(day_data['running_balance'], 2) for day_data in cashflow_daily.values()]
+
     return render_template(
         'reports/cashflow.html',
         entries=entries,
@@ -193,6 +249,9 @@ def cashflow_report():
         outflow=outflow,
         closing_balance=closing_balance,
         current_balance=current_balance,
+        cashflow_chart_labels=cashflow_chart_labels,
+        cashflow_chart_net=cashflow_chart_net,
+        cashflow_chart_balance=cashflow_chart_balance,
     )
 
 @reports_bp.route('/profitability')
@@ -244,6 +303,28 @@ def profitability_report():
     purchase_total = sum(p.total for p in purchases)
     net_cash_movement = total_revenue - purchase_total
 
+    profitability_daily = {}
+    for row in rows:
+        day_value = row['transaction'].created_at.date()
+        day_key = day_value.isoformat()
+        if day_key not in profitability_daily:
+            profitability_daily[day_key] = {
+                'label': day_value.strftime('%b %d'),
+                'revenue': 0.0,
+                'cogs': 0.0,
+                'gross_profit': 0.0,
+            }
+
+        profitability_daily[day_key]['revenue'] += float(row['revenue'])
+        profitability_daily[day_key]['cogs'] += float(row['cogs'])
+        profitability_daily[day_key]['gross_profit'] += float(row['gross_profit'])
+
+    profitability_keys = sorted(profitability_daily.keys())
+    profitability_chart_labels = [profitability_daily[key]['label'] for key in profitability_keys]
+    profitability_chart_revenue = [round(profitability_daily[key]['revenue'], 2) for key in profitability_keys]
+    profitability_chart_cogs = [round(profitability_daily[key]['cogs'], 2) for key in profitability_keys]
+    profitability_chart_profit = [round(profitability_daily[key]['gross_profit'], 2) for key in profitability_keys]
+
     return render_template(
         'reports/profitability.html',
         rows=rows,
@@ -255,6 +336,10 @@ def profitability_report():
         overall_margin_percent=overall_margin_percent,
         purchase_total=purchase_total,
         net_cash_movement=net_cash_movement,
+        profitability_chart_labels=profitability_chart_labels,
+        profitability_chart_revenue=profitability_chart_revenue,
+        profitability_chart_cogs=profitability_chart_cogs,
+        profitability_chart_profit=profitability_chart_profit,
     )
 
 
