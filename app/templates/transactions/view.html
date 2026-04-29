@@ -2,8 +2,10 @@
 
 {% block title %}{{ transaction.reference_number }} - Inventory System{% endblock %}
 
+{% block body_class %}receipt-page{% endblock %}
+
 {% block content %}
-<div class="page-header">
+<div class="page-header no-print">
   <div class="page-header-left">
     <a href="{{ url_for('transactions.list_transactions') }}" class="back-link">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -12,128 +14,159 @@
       </svg>
       Back to Transactions
     </a>
-    <h1>{{ transaction.reference_number }}</h1>
-    <span class="badge badge-{{ 'success' if transaction.transaction_type == 'sale' else 'info' }} badge-lg">
-      {{ transaction.transaction_type.title() }}
-    </span>
+    <h1>Receipt</h1>
+    <p class="page-subtitle">{{ transaction.reference_number }} · {{ transaction.transaction_type.title() }}</p>
+  </div>
+  <div class="page-header-right">
+    <button type="button" class="btn btn-primary js-print-receipt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+      Print Receipt
+    </button>
   </div>
 </div>
 
-<div class="detail-grid">
-  <!-- Transaction Info -->
-  <div class="detail-card">
-    <div class="card-header">
-      <h3>Transaction Details</h3>
+<section class="receipt-sheet">
+  <div class="receipt-header">
+    <div class="receipt-company-block">
+      <p class="receipt-kicker">FROM</p>
+      <div class="receipt-company-lines">
+        <strong>UPHSD-M Bookstore</strong>
+        <span>Molino Road, Barangay Molino III</span>
+        <span>City of Bacoor, Cavite 4102, Philippines</span>
+        <span>Contact No.: 046) 477 - 0602 / 0606 / 0621</span>
+        <span>Website: perpetualdalta.edu.ph</span>
+        <span>Email: bookstore@perpetualdalta.edu.ph</span>
+      </div>
     </div>
-    <div class="card-body">
-      <div class="detail-row">
-        <span class="detail-label">Reference Number</span>
-        <span class="detail-value">{{ transaction.reference_number }}</span>
+
+    <div class="receipt-brand-block">
+      <img src="{{ url_for('static', filename='images/bookstore-logo.png') }}" alt="Company logo" class="receipt-logo">
+      <h2>RECEIPT</h2>
+      <div class="receipt-meta-list">
+        <div class="receipt-meta-item">
+          <span>Receipt #:</span>
+          <strong>{{ "{:07d}".format(transaction.id) }}</strong>
+        </div>
+        <div class="receipt-meta-item">
+          <span>Receipt Date:</span>
+          <strong>{{ transaction.created_at.month }}/{{ transaction.created_at.day }}/{{ transaction.created_at.year }}</strong>
+        </div>
       </div>
-      <div class="detail-row">
-        <span class="detail-label">Type</span>
-        <span class="detail-value">
-          <span class="badge badge-{{ 'success' if transaction.transaction_type == 'sale' else 'info' }}">
-            {{ transaction.transaction_type.title() }}
-          </span>
-        </span>
-      </div>
-      {% if transaction.customer_name %}
-      <div class="detail-row">
-        <span class="detail-label">Customer</span>
-        <span class="detail-value">{{ transaction.customer_name }}</span>
-      </div>
-      {% endif %}
-      {% if transaction.supplier %}
-      <div class="detail-row">
-        <span class="detail-label">Supplier</span>
-        <span class="detail-value">
-          <a href="{{ url_for('suppliers.view_supplier', id=transaction.supplier.id) }}" class="link-primary">
-            {{ transaction.supplier.name }}
-          </a>
-        </span>
-      </div>
-      {% endif %}
-      <div class="detail-row">
-        <span class="detail-label">Processed By</span>
-        <span class="detail-value">{{ transaction.user.username }}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Date & Time</span>
-        <span class="detail-value">{{ transaction.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
-      </div>
-      {% if transaction.notes %}
-      <div class="detail-row">
-        <span class="detail-label">Notes</span>
-        <span class="detail-value">{{ transaction.notes }}</span>
-      </div>
-      {% endif %}
     </div>
   </div>
-  
-  <!-- Amount Summary -->
-  <div class="detail-card">
-    <div class="card-header">
-      <h3>Amount Summary</h3>
+
+  <div class="receipt-parties">
+    <div class="receipt-party-card">
+      <p class="receipt-kicker">FROM</p>
+      <div class="receipt-party-lines">
+        {% if transaction.transaction_type == 'sale' %}
+        <strong>UPHSD-M Bookstore</strong>
+        <span>Molino Road, Barangay Molino III</span>
+        <span>City of Bacoor, Cavite 4102, Philippines</span>
+        {% else %}
+        <strong>{{ transaction.supplier.name if transaction.supplier else 'Supplier Name' }}</strong>
+        <span>{{ transaction.supplier.address if transaction.supplier and transaction.supplier.address else 'Supplier Address 1234' }}</span>
+        <span>{{ transaction.supplier.phone if transaction.supplier and transaction.supplier.phone else 'Supplier Contact' }}</span>
+        {% endif %}
+      </div>
     </div>
-    <div class="card-body">
-      <div class="detail-row">
-        <span class="detail-label">Subtotal</span>
-        <span class="detail-value">₱{{ "{:,.2f}".format(transaction.subtotal) }}</span>
+
+    <div class="receipt-party-card">
+      <p class="receipt-kicker">TO</p>
+      <div class="receipt-party-lines">
+        {% if transaction.transaction_type == 'sale' %}
+        <strong>{{ transaction.customer_name or 'Customer Name' }}</strong>
+        <span>Customer Address 1234</span>
+        <span>CA 12345</span>
+        {% else %}
+        <strong>UPHSD-M Bookstore</strong>
+        <span>Molino Road, Barangay Molino III</span>
+        <span>City of Bacoor, Cavite 4102, Philippines</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="receipt-meta-strip">
+    <span><strong>Type:</strong> {{ transaction.transaction_type.title() }}</span>
+    <span><strong>Processed By:</strong> {{ transaction.user.username }}</span>
+    <span><strong>Reference:</strong> {{ transaction.reference_number }}</span>
+  </div>
+
+  <div class="receipt-table-wrap">
+    <table class="receipt-table">
+      <thead>
+        <tr>
+          <th class="receipt-col-qty">QTY</th>
+          <th>Description</th>
+          <th class="receipt-col-price">Unit Price</th>
+          <th class="receipt-col-price">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td class="receipt-col-qty">{{ item.quantity }}</td>
+          <td>
+            <div class="receipt-item-desc">
+              <strong>{{ item.product.name }}</strong>
+              <span>SKU: {{ item.product.sku }}</span>
+            </div>
+          </td>
+          <td class="receipt-col-price">₱{{ "{:,.2f}".format(item.unit_price) }}</td>
+          <td class="receipt-col-price">₱{{ "{:,.2f}".format(item.total_price) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="receipt-summary-wrap">
+    <div class="receipt-summary-box">
+      <div class="receipt-summary-row">
+        <span>Subtotal</span>
+        <strong>₱{{ "{:,.2f}".format(transaction.subtotal) }}</strong>
       </div>
       {% if transaction.discount > 0 %}
-      <div class="detail-row">
-        <span class="detail-label">Discount</span>
-        <span class="detail-value text-success">-₱{{ "{:,.2f}".format(transaction.discount) }}</span>
+      <div class="receipt-summary-row">
+        <span>Discount</span>
+        <strong class="text-success">-₱{{ "{:,.2f}".format(transaction.discount) }}</strong>
       </div>
       {% endif %}
       {% if transaction.tax > 0 %}
-      <div class="detail-row">
-        <span class="detail-label">Tax</span>
-        <span class="detail-value">₱{{ "{:,.2f}".format(transaction.tax) }}</span>
+      <div class="receipt-summary-row">
+        <span>Sales Tax (5%)</span>
+        <strong>₱{{ "{:,.2f}".format(transaction.tax) }}</strong>
       </div>
       {% endif %}
-      <hr>
-      <div class="detail-row total-row">
-        <span class="detail-label"><strong>Total</strong></span>
-        <span class="detail-value"><strong>₱{{ "{:,.2f}".format(transaction.total) }}</strong></span>
+      <div class="receipt-summary-row total">
+        <span>Total</span>
+        <strong>₱{{ "{:,.2f}".format(transaction.total) }}</strong>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Items Table -->
-<div class="table-card">
-  <div class="card-header">
-    <h3>Items ({{ items|length }})</h3>
+  <div class="receipt-notes">
+    <h3>Terms and Conditions</h3>
+    {% if transaction.transaction_type == 'sale' %}
+    <p>Items are sold as listed and subject to availability.</p>
+    <p>Returns or exchanges are accepted within 7 days only for defective or incorrect items, with this receipt.</p>
+    <p>Please keep this receipt for verification and record purposes.</p>
+    {% else %}
+    <p>Received items should be checked upon delivery for completeness and condition.</p>
+    <p>Any shortages, damage, or billing discrepancies must be reported within 7 days.</p>
+    <p>Approved returns or adjustments are subject to bookstore and supplier policies.</p>
+    {% endif %}
   </div>
-  <table class="data-table priority-table">
-    <thead>
-      <tr>
-        <th class="priority-col-1">Product</th>
-        <th class="priority-col-3">SKU</th>
-        <th class="priority-col-2">Unit Price</th>
-        <th class="priority-col-1">Quantity</th>
-        <th class="priority-col-1">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-      <tr>
-        <td class="priority-col-1">
-          <a href="{{ url_for('products.view_product', id=item.product.id) }}">{{ item.product.name }}</a>
-          <div class="mobile-inline-meta">
-            <span class="meta-line"><strong>SKU:</strong> {{ item.product.sku }}</span>
-            <span class="meta-line"><strong>Unit Price:</strong> ₱{{ "{:,.2f}".format(item.unit_price) }}</span>
-          </div>
-        </td>
-        <td class="priority-col-3">{{ item.product.sku }}</td>
-        <td class="priority-col-2">₱{{ "{:,.2f}".format(item.unit_price) }}</td>
-        <td class="priority-col-1">{{ item.quantity }}</td>
-        <td class="priority-col-1">₱{{ "{:,.2f}".format(item.total_price) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+
+  <div class="receipt-footer">
+    <span>Contact No.: 046) 477 - 0602 / 0606 / 0621</span>
+    <span>Email: bookstore@perpetualdalta.edu.ph</span>
+    <span>Web: perpetualdalta.edu.ph</span>
+  </div>
+</section>
 {% endblock %}

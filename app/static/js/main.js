@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initFlashMessages();
   initSubmenu();
   initMobileNav();
+  initPrintButtons();
 });
 
 // ===== FLASH MESSAGES =====
@@ -114,6 +115,15 @@ function initMobileNav() {
     if (window.innerWidth > 1024) {
       closeSidebar();
     }
+  });
+}
+
+// ===== PRINT ACTIONS =====
+function initPrintButtons() {
+  document.querySelectorAll('.js-print-receipt').forEach((button) => {
+    button.addEventListener('click', () => {
+      window.print();
+    });
   });
 }
 
