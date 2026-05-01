@@ -555,6 +555,7 @@ def api_search():
         'sku': p.sku,
         'name': p.name,
         'price': p.selling_price,
+        'cost_price': p.cost_price,
         'quantity': p.quantity,
         'category': p.category.name
     } for p in products])

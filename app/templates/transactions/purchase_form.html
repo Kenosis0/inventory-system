@@ -145,13 +145,13 @@
       return;
     }
     
-    // Add to items
+    // Add to items, default unit cost to the product's cost price
     items.push({
       id: product.id,
       name: product.name,
       sku: product.sku,
       currentStock: product.quantity,
-      unitCost: 0,
+      unitCost: product.cost_price || 0,
       quantity: 1
     });
     
